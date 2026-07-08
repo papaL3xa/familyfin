@@ -861,6 +861,24 @@ function App() {
           </div>
         </nav>
       )}
+
+      {showSettings && !currentUser && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+            <h3 style={{ marginTop: 0 }}>Pengaturan Admin</h3>
+            <form onSubmit={(e) => { handleSaveApiUrl(e); setShowSettings(false); }}>
+              <div className="form-group">
+                <label>Web App URL</label>
+                <input type="url" name="apiUrl" defaultValue={apiUrl} className="form-control" required placeholder="https://script.google.com/macros/s/.../exec" />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Simpan</button>
+                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowSettings(false)}>Tutup</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
