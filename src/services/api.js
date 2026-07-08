@@ -50,6 +50,16 @@ export async function getConfig() {
   }
 }
 
+export async function updateConfig(configMap) {
+  const url = getApiUrl();
+  if (!url) return { error: "API URL belum diatur" };
+  const res = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'updateConfig', payload: configMap })
+  });
+  return res.json();
+}
+
 export async function approveUser(email, folderId, years) {
   const url = getApiUrl();
   if (!url) return { error: "API URL belum diatur" };

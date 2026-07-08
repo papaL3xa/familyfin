@@ -40,7 +40,8 @@ import {
   fetchActiveUsers,
   extendSubscription,
   toggleBlockUser,
-  getConfig
+  getConfig,
+  updateConfig
 } from './services/api';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -258,6 +259,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
   const [extendUser, setExtendUser] = useState(null);
   const [extendType, setExtendType] = useState('1');
   const [customYears, setCustomYears] = useState('2');
+  const [promoConfig, setPromoConfig] = useState({ Promo_Message: '', Price_1Year: '', Price_Bundle: '', Price_Lifetime: '' });
 
   useEffect(() => {
     loadUsers();
@@ -265,12 +267,16 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
 
   const loadUsers = async () => {
     try {
-      const [pending, active] = await Promise.all([
+      const [pending, active, configData] = await Promise.all([
         getPendingUsers(),
-        fetchActiveUsers()
+        fetchActiveUsers(),
+        getConfig()
       ]);
       setPendingUsers(pending || []);
       setActiveUsers(active || []);
+      if (configData && !configData.error) {
+        setPromoConfig(configData);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -374,6 +380,25 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
     }
   };
 
+  const handleSavePromo = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await updateConfig(promoConfig);
+      if (res.success) {
+        setMessage({ type: 'success', text: "Pengaturan promosi berhasil disimpan!" });
+        // Optionally reload config
+      } else {
+        setMessage({ type: 'error', text: res.error || "Gagal menyimpan promosi." });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: "Terjadi kesalahan saat menyimpan promosi." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ padding: '1.5rem', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
@@ -409,6 +434,40 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
             setMessage({ type: 'success', text: "Web App URL berhasil diperbarui." });
             setTimeout(() => setMessage(null), 3000);
           }}>Perbarui URL</button>
+        </form>
+      </div>
+
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        <h3>Pengaturan Promosi & Harga</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+          Ubah pesan sambutan dan daftar harga berlangganan yang akan muncul di layar awal.
+        </p>
+        <form onSubmit={handleSavePromo} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Pesan Sambutan Promosi</label>
+            <textarea 
+              className="form-control" 
+              rows="3"
+              value={promoConfig.Promo_Message || ''} 
+              onChange={e => setPromoConfig({...promoConfig, Promo_Message: e.target.value})}
+              placeholder="Misal: Catat pengeluaran Anda dengan cerdas..." 
+            />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga 1 Tahun</label>
+              <input type="text" className="form-control" value={promoConfig.Price_1Year || ''} onChange={e => setPromoConfig({...promoConfig, Price_1Year: e.target.value})} placeholder="Rp 50.000" />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga Bundling</label>
+              <input type="text" className="form-control" value={promoConfig.Price_Bundle || ''} onChange={e => setPromoConfig({...promoConfig, Price_Bundle: e.target.value})} placeholder="Rp 90.000 / 2 Tahun" />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga Seumur Hidup</label>
+              <input type="text" className="form-control" value={promoConfig.Price_Lifetime || ''} onChange={e => setPromoConfig({...promoConfig, Price_Lifetime: e.target.value})} placeholder="Rp 250.000" />
+            </div>
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Promosi</button>
         </form>
       </div>
 
@@ -570,7 +629,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
   );
 }
 
-function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl }) {
+function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -614,7 +673,36 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl }) {
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', padding: '1rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem 1rem', gap: '2rem' }}>
+      
+      {appConfig && appConfig.Promo_Message && (
+        <div className="card" style={{ maxWidth: '700px', width: '100%', textAlign: 'center', background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', border: '1px solid var(--primary)' }}>
+          <h2 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Selamat Datang di FamilyFin!</h2>
+          <p style={{ fontSize: '1.1rem', marginBottom: '2rem', lineHeight: '1.6' }}>{appConfig.Promo_Message}</p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            {appConfig.Price_1Year && (
+              <div style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', background: 'rgba(255,255,255,0.5)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <div style={{ fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Paket 1 Tahun</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{appConfig.Price_1Year}</div>
+              </div>
+            )}
+            {appConfig.Price_Bundle && (
+              <div style={{ padding: '1.5rem', border: '1px solid var(--success)', borderRadius: '12px', background: 'var(--success-bg)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <div style={{ fontWeight: 'bold', color: 'var(--success)', marginBottom: '0.5rem' }}>Paket Bundling</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{appConfig.Price_Bundle}</div>
+              </div>
+            )}
+            {appConfig.Price_Lifetime && (
+              <div style={{ padding: '1.5rem', border: '1px solid var(--warning)', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.15)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <div style={{ fontWeight: 'bold', color: 'var(--warning)', marginBottom: '0.5rem' }}>Seumur Hidup</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>{appConfig.Price_Lifetime}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>{isLogin ? 'Masuk' : 'Daftar Akun'}</h2>
         
@@ -664,6 +752,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [subscriptionWarning, setSubscriptionWarning] = useState(null);
+  const [appConfig, setAppConfig] = useState(null);
 
   const handleLoginSuccess = (data) => {
     localStorage.setItem('currentUser', JSON.stringify(data));
@@ -695,6 +784,14 @@ function App() {
       loadData();
     }
   }, [apiUrl, currentUser]);
+
+  useEffect(() => {
+    if (apiUrl) {
+      getConfig().then(data => {
+        if (!data.error) setAppConfig(data);
+      });
+    }
+  }, [apiUrl]);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -793,7 +890,7 @@ function App() {
         )}
 
         {!currentUser ? (
-          <AuthScreen onLoginSuccess={handleLoginSuccess} apiUrl={apiUrl} onSaveApiUrl={handleSaveApiUrl} />
+          <AuthScreen onLoginSuccess={handleLoginSuccess} apiUrl={apiUrl} onSaveApiUrl={handleSaveApiUrl} appConfig={appConfig} />
         ) : (
           <>
             {activeTab === 'admin' && currentUser.role === 'admin' && <AdminDashboard currentUser={currentUser} onLogout={handleLogout} apiUrl={apiUrl} onSaveApiUrl={handleSaveApiUrl} />}
