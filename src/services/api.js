@@ -50,12 +50,12 @@ export async function getConfig() {
   }
 }
 
-export async function approveUser(email, folderId) {
+export async function approveUser(email, folderId, years) {
   const url = getApiUrl();
   if (!url) return { error: "API URL belum diatur" };
   const res = await fetch(url, {
     method: 'POST',
-    body: JSON.stringify({ action: 'approveUser', payload: { email, folderId } })
+    body: JSON.stringify({ action: 'approveUser', payload: { email, folderId, years } })
   });
   return res.json();
 }

@@ -254,6 +254,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [confirmReject, setConfirmReject] = useState(null);
+  const [approveUserEmail, setApproveUserEmail] = useState(null);
   const [extendUser, setExtendUser] = useState(null);
   const [extendType, setExtendType] = useState('1');
   const [customYears, setCustomYears] = useState('2');
@@ -282,17 +283,23 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  const handleApprove = async (email) => {
+  const handleApprove = (email) => {
     if (!folderId) {
       setMessage({ type: 'error', text: "Mohon isi dan simpan Folder ID terlebih dahulu sebelum menyetujui akun." });
       return;
     }
+    setApproveUserEmail(email);
+  };
+
+  const executeApprove = async () => {
+    if (!approveUserEmail) return;
     setLoading(true);
     setMessage(null);
     try {
-      const res = await approveUser(email, folderId);
+      let years = extendType === 'custom' ? customYears : extendType;
+      const res = await approveUser(approveUserEmail, folderId, years);
       if (res.success) {
-        setMessage({ type: 'success', text: `Akun ${email} berhasil disetujui. Spreadsheet ID: ${res.spreadsheetId}` });
+        setMessage({ type: 'success', text: `Akun ${approveUserEmail} berhasil disetujui. Spreadsheet ID: ${res.spreadsheetId}` });
         loadUsers();
       } else {
         setMessage({ type: 'error', text: res.error });
@@ -301,6 +308,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
       setMessage({ type: 'error', text: "Terjadi kesalahan." });
     } finally {
       setLoading(false);
+      setApproveUserEmail(null);
     }
   };
 
@@ -474,6 +482,39 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
         )}
       </div>
 
+      {approveUserEmail && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+            <h3 style={{ marginTop: 0 }}>Setujui Pengguna</h3>
+            <p style={{ color: 'var(--text-muted)' }}>
+              Pilih masa aktif berlangganan untuk <strong>{approveUserEmail}</strong>.
+            </p>
+            <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="radio" name="approveExtendType" value="1" checked={extendType === '1'} onChange={() => setExtendType('1')} />
+                1 Tahun
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="radio" name="approveExtendType" value="custom" checked={extendType === 'custom'} onChange={() => setExtendType('custom')} />
+                Custom (Tahun)
+              </label>
+              {extendType === 'custom' && (
+                <input type="number" min="1" max="50" className="form-control" value={customYears} onChange={e => setCustomYears(e.target.value)} style={{ marginLeft: '1.5rem', width: '100px', padding: '0.25rem 0.5rem' }} />
+              )}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <input type="radio" name="approveExtendType" value="lifetime" checked={extendType === 'lifetime'} onChange={() => setExtendType('lifetime')} />
+                Seumur Hidup (Lifetime)
+              </label>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setApproveUserEmail(null)}>Batal</button>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={executeApprove}>Konfirmasi Setujui</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {extendUser && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)' }}>
           <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
@@ -534,7 +575,6 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
-  const [showSettings, setShowSettings] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -601,31 +641,6 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl }) {
           </span>
         </p>
       </div>
-
-      {showSettings && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100 }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem' }}>
-            <h3 style={{ marginTop: 0 }}>Pengaturan Admin</h3>
-            <form onSubmit={(e) => { onSaveApiUrl(e); setShowSettings(false); }}>
-              <div className="form-group">
-                <label>Web App URL</label>
-                <input type="url" name="apiUrl" defaultValue={apiUrl} className="form-control" required placeholder="https://script.google.com/macros/s/.../exec" />
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Simpan</button>
-                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setShowSettings(false)}>Tutup</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      <div 
-        style={{ position: 'absolute', top: '1rem', right: '1rem', cursor: 'pointer', color: 'var(--text-muted)' }}
-        onClick={() => setShowSettings(true)}
-      >
-        <Settings size={20} />
-      </div>
     </div>
   );
 }
@@ -640,6 +655,7 @@ function App() {
   
   const [activeTab, setActiveTab] = useState(currentUser ? (currentUser.spreadsheetId ? 'home' : 'admin') : 'login');
   const [apiUrl, setApiUrl] = useState(localStorage.getItem('gas_api_url') || '');
+  const [showSettings, setShowSettings] = useState(false);
 
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -717,7 +733,7 @@ function App() {
           <span>FamilyFin</span>
         </div>
 
-        {currentUser && (
+        {currentUser ? (
           <div className="header-nav">
             {currentUser.spreadsheetId && (
               <>
@@ -749,6 +765,13 @@ function App() {
                 <Shield size={18} /> Admin
               </div>
             )}
+          </div>
+        ) : (
+          <div 
+            style={{ cursor: 'pointer', color: 'white', padding: '0.5rem', background: 'rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => setShowSettings(true)}
+          >
+            <Settings size={20} />
           </div>
         )}
       </header>
