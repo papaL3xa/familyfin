@@ -767,12 +767,14 @@ function App() {
             )}
           </div>
         ) : (
-          <div 
-            style={{ cursor: 'pointer', color: 'white', padding: '0.5rem', background: 'rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={() => setShowSettings(true)}
-          >
-            <Settings size={20} />
-          </div>
+          !apiUrl && (
+            <div 
+              style={{ cursor: 'pointer', color: 'white', padding: '0.5rem', background: 'rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => setShowSettings(true)}
+            >
+              <Settings size={20} />
+            </div>
+          )
         )}
       </header>
 
