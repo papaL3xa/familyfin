@@ -59,7 +59,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 3rem;
+  padding: calc(1rem + env(safe-area-inset-top, 0px)) 3rem 1rem 3rem;
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
@@ -117,7 +117,8 @@ h1, h2, h3, h4, h5, h6 {
   bottom: 0;
   left: 0;
   right: 0;
-  height: var(--bottom-nav-height);
+  height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 15px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 15px);
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -492,12 +493,12 @@ h1, h2, h3, h4, h5, h6 {
   }
   
   .top-header {
-    padding: 1rem;
+    padding: calc(1rem + env(safe-area-inset-top, 0px)) 1rem 1rem 1rem;
     justify-content: center;
   }
 
   .main-content {
-    padding: 1.25rem 1rem calc(var(--bottom-nav-height) + 1.5rem);
+    padding: 1.25rem 1rem calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px) + 1.5rem + 15px);
   }
 
   .bottom-nav {

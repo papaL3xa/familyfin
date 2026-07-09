@@ -18,18 +18,21 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
-  Shield
+  Shield,
+  Edit
 } from 'lucide-react';
 import {
   fetchTransactions,
   addTransaction,
   deleteTransaction,
+  updateTransaction,
   fetchCategories,
   addCategory,
   deleteCategory,
   fetchWallets,
   addWallet,
   deleteWallet,
+  updateWallet,
   fetchDebts,
   addDebt,
   deleteDebt,
@@ -1179,7 +1182,7 @@ function DashboardTab({ transactions, wallets, isLoading }) {
     const wTxs = transactions.filter(t => t.wallet === w.name);
     const inc = wTxs.filter(t => t.type === 'Income').reduce((s, t) => s + Number(t.amount), 0);
     const exp = wTxs.filter(t => t.type === 'Expense').reduce((s, t) => s + Number(t.amount), 0);
-    return { name: w.name, balance: inc - exp };
+    return { name: w.name, balance: inc - exp, icon: w.icon };
   });
 
   // Calculate transactions without wallet (assigned to Dompet Utama initially)
@@ -1199,8 +1202,12 @@ function DashboardTab({ transactions, wallets, isLoading }) {
       <div className="grid-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' }}>
         {walletBalances.map((w, idx) => (
           <div key={idx} className="card" style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div className="feed-icon" style={{ background: 'var(--primary-bg)', color: 'var(--primary)', width: '48px', height: '48px' }}>
-              <CreditCard size={24} />
+            <div className="feed-icon" style={{ background: 'var(--primary-bg)', color: 'var(--primary)', width: '48px', height: '48px', overflow: 'hidden' }}>
+              {w.icon ? (
+                <img src={w.icon} alt={w.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <CreditCard size={24} />
+              )}
             </div>
             <div>
               <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>{w.name}</p>
@@ -1275,6 +1282,7 @@ function DashboardTab({ transactions, wallets, isLoading }) {
 function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoading }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [txType, setTxType] = useState(null);
+  const [editingTx, setEditingTx] = useState(null);
 
   // Filter States
   const [filterType, setFilterType] = useState('All');
@@ -1306,6 +1314,31 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
       onRefresh();
     } catch (err) {
       alert("Gagal menambahkan transaksi");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateTx = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const form = e.target;
+    const tx = {
+      id: editingTx.id,
+      date: form.elements.date.value,
+      type: editingTx.type,
+      amount: form.elements.amount.value,
+      category: form.elements.category.value,
+      wallet: form.elements.wallet.value,
+      note: form.elements.note.value
+    };
+
+    try {
+      await updateTransaction(tx);
+      setEditingTx(null);
+      onRefresh();
+    } catch (err) {
+      alert("Gagal memperbarui transaksi");
     } finally {
       setIsSubmitting(false);
     }
@@ -1480,10 +1513,13 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
                   </p>
                 </div>
               </div>
-              <div className="feed-item-right">
-                <span className={`feed-amount ${t.type === 'Income' ? 'income' : 'expense'}`}>
+              <div className="feed-item-right" style={{ flexDirection: 'row', gap: '0.25rem', alignItems: 'center' }}>
+                <span className={`feed-amount ${t.type === 'Income' ? 'income' : 'expense'}`} style={{ marginRight: '0.5rem' }}>
                   {t.type === 'Income' ? '+' : '-'}Rp {Number(t.amount).toLocaleString('id-ID')}
                 </span>
+                <button className="btn" style={{ padding: '0.25rem', color: 'var(--primary)', background: 'transparent' }} onClick={() => setEditingTx(t)}>
+                  <Edit size={16} />
+                </button>
                 <button className="btn" style={{ padding: '0.25rem', color: 'var(--danger)', background: 'transparent' }} onClick={() => handleDelete(t.id)}>
                   <Trash2 size={16} />
                 </button>
@@ -1493,6 +1529,48 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
           {displayTransactions.length === 0 && (
             <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>Belum ada transaksi sesuai filter</div>
           )}
+        </div>
+      )}
+
+      {editingTx && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '500px', width: '100%', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Edit Transaksi</h3>
+            <form onSubmit={handleUpdateTx} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Tanggal</label>
+                <GlassDatePicker name="date" required style={{ width: '100%' }} defaultValue={editingTx.date} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Kategori</label>
+                <GlassSelect name="category" required defaultValue={editingTx.category} options={
+                  categories.filter(c => c.type === editingTx.type).map(c => ({ label: c.name, value: c.name }))
+                } style={{ width: '100%' }} />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Dompet</label>
+                  <GlassSelect name="wallet" required defaultValue={editingTx.wallet} options={
+                    (wallets && wallets.length > 0) ? wallets.map(w => ({ label: w.name, value: w.name })) : [{ label: 'Dompet Utama', value: 'Dompet Utama' }]
+                  } style={{ width: '100%' }} />
+                </div>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Jumlah (Rp)</label>
+                  <CurrencyInput name="amount" className="form-control" required defaultValue={editingTx.amount} />
+                </div>
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Catatan (Opsional)</label>
+                <input type="text" name="note" className="form-control" defaultValue={editingTx.note} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, background: editingTx.type === 'Income' ? 'var(--success)' : 'var(--danger)', borderColor: 'transparent' }} disabled={isSubmitting}>
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </button>
+                <button type="button" className="btn btn-outline" onClick={() => setEditingTx(null)} style={{ flex: 1 }}>Batal</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
@@ -1626,20 +1704,85 @@ function CategoriesTab({ categories, onRefresh, isLoading }) {
 
 function WalletsTab({ wallets, onRefresh, isLoading }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [iconBase64, setIconBase64] = useState("");
+  const [editingWallet, setEditingWallet] = useState(null);
+  const [editIconBase64, setEditIconBase64] = useState("");
+
+  const handleImageChange = (e, isEdit = false) => {
+    const file = e.target.files[0];
+    if (!file) {
+      isEdit ? setEditIconBase64("") : setIconBase64("");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        // Max dimensions 100x100
+        const MAX_SIZE = 100;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > MAX_SIZE) {
+            height = Math.round((height *= MAX_SIZE / width));
+            width = MAX_SIZE;
+          }
+        } else {
+          if (height > MAX_SIZE) {
+            width = Math.round((width *= MAX_SIZE / height));
+            height = MAX_SIZE;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        // Compress heavily as it's just a tiny icon
+        const dataUrl = canvas.toDataURL("image/webp", 0.7);
+        isEdit ? setEditIconBase64(dataUrl) : setIconBase64(dataUrl);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleAdd = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     const form = e.target;
     const wallet = {
-      name: form.elements.name.value
+      name: form.elements.name.value,
+      icon: iconBase64
     };
     try {
       await addWallet(wallet);
       form.reset();
+      setIconBase64("");
       onRefresh();
     } catch (err) {
       alert("Gagal menambah dompet");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const form = e.target;
+    const wallet = {
+      id: editingWallet.id,
+      name: form.elements.name.value,
+      icon: editIconBase64 || editingWallet.icon || ""
+    };
+    try {
+      await updateWallet(wallet);
+      setEditingWallet(null);
+      setEditIconBase64("");
+      onRefresh();
+    } catch (err) {
+      alert("Gagal memperbarui dompet");
     } finally {
       setIsSubmitting(false);
     }
@@ -1664,6 +1807,15 @@ function WalletsTab({ wallets, onRefresh, isLoading }) {
             <label>Nama Dompet</label>
             <input type="text" name="name" className="form-control" placeholder="Contoh: Tunai, Bank BCA, OVO..." required />
           </div>
+          <div className="form-group" style={{ marginBottom: 0 }}>
+            <label>Logo / Gambar (Opsional)</label>
+            <input type="file" accept="image/*" className="form-control" onChange={handleImageChange} style={{ padding: '0.5rem' }} />
+            {iconBase64 && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <img src={iconBase64} alt="Preview" style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid var(--glass-border)' }} />
+              </div>
+            )}
+          </div>
           <button type="submit" className="btn btn-primary" style={{ background: 'var(--primary)' }} disabled={isSubmitting}>
             {isSubmitting ? 'Menyimpan...' : 'Tambah Dompet'}
           </button>
@@ -1678,14 +1830,24 @@ function WalletsTab({ wallets, onRefresh, isLoading }) {
               {(Array.isArray(wallets) ? wallets : []).map(w => (
                 <div className="feed-item" key={w.id} style={{ padding: '0.75rem 1rem' }}>
                   <div className="feed-item-left">
-                    <div className="feed-icon" style={{ width: '36px', height: '36px', background: 'var(--primary-bg)', color: 'var(--primary)' }}>
-                      <CreditCard size={16} />
+                    <div className="feed-icon" style={{ width: '36px', height: '36px', background: 'var(--primary-bg)', color: 'var(--primary)', overflow: 'hidden' }}>
+                      {w.icon ? (
+                        <img src={w.icon} alt={w.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <CreditCard size={16} />
+                      )}
                     </div>
                     <div className="feed-details">
                       <h4 style={{ fontSize: '0.95rem' }}>{w.name}</h4>
                     </div>
                   </div>
-                  <div className="feed-item-right">
+                  <div className="feed-item-right" style={{ flexDirection: 'row', gap: '0.25rem' }}>
+                    <button className="btn" style={{ padding: '0.25rem', color: 'var(--primary)', background: 'transparent' }} onClick={() => {
+                      setEditingWallet(w);
+                      setEditIconBase64(w.icon || "");
+                    }}>
+                      <Edit size={16} />
+                    </button>
                     <button className="btn" style={{ padding: '0.25rem', color: 'var(--danger)', background: 'transparent' }} onClick={() => handleDelete(w.id)}>
                       <Trash2 size={16} />
                     </button>
@@ -1696,6 +1858,38 @@ function WalletsTab({ wallets, onRefresh, isLoading }) {
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Belum ada dompet terdaftar.</p>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {editingWallet && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Edit Dompet</h3>
+            <form onSubmit={handleUpdate} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Nama Dompet</label>
+                <input type="text" name="name" className="form-control" defaultValue={editingWallet.name} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Logo / Gambar (Opsional)</label>
+                <input type="file" accept="image/*" className="form-control" onChange={(e) => handleImageChange(e, true)} style={{ padding: '0.5rem' }} />
+                {editIconBase64 && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <img src={editIconBase64} alt="Preview" style={{ width: '48px', height: '48px', objectFit: 'contain', borderRadius: '8px', border: '1px solid var(--glass-border)' }} />
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }} disabled={isSubmitting}>
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan'}
+                </button>
+                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => {
+                  setEditingWallet(null);
+                  setEditIconBase64("");
+                }}>Batal</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

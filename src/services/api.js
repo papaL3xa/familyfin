@@ -172,6 +172,23 @@ export async function deleteTransaction(id) {
   }
 }
 
+export async function updateTransaction(tx) {
+  const url = getApiUrl();
+  const sid = getSpreadsheetId();
+  if (!url) throw new Error("API URL not set");
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateTransaction', payload: tx, spreadsheetId: sid })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating transaction:", error);
+    throw error;
+  }
+}
+
 export async function fetchCategories() {
   const url = getApiUrl();
   const sid = getSpreadsheetId();
@@ -266,6 +283,23 @@ export async function deleteWallet(id) {
     return await response.json();
     } catch (error) {
     console.error("Error deleting wallet:", error);
+    throw error;
+  }
+}
+
+export async function updateWallet(wallet) {
+  const url = getApiUrl();
+  const sid = getSpreadsheetId();
+  if (!url) throw new Error("API URL not set");
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'updateWallet', payload: wallet, spreadsheetId: sid })
+    });
+    return await response.json();
+  } catch (error) {
+    console.error("Error updating wallet:", error);
     throw error;
   }
 }
