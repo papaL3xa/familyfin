@@ -1,7 +1,8 @@
 // Service to communicate with Google Apps Script Backend
+import { DEFAULT_API_URL } from '../config';
 
 function getApiUrl() {
-  return localStorage.getItem('gas_api_url');
+  return localStorage.getItem('gas_api_url') || DEFAULT_API_URL;
 }
 
 function getSpreadsheetId() {
@@ -60,6 +61,15 @@ export async function updateConfig(configMap) {
   return res.json();
 }
 
+export async function registerFreeTrial(email) {
+  const url = getApiUrl();
+  if (!url) return { error: "API URL belum diatur" };
+  const res = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'registerFreeTrial', payload: { email } })
+  });
+  return res.json();
+}
 export async function approveUser(email, folderId, years) {
   const url = getApiUrl();
   if (!url) return { error: "API URL belum diatur" };

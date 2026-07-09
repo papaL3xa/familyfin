@@ -41,8 +41,10 @@ import {
   extendSubscription,
   toggleBlockUser,
   getConfig,
-  updateConfig
+  updateConfig,
+  registerFreeTrial
 } from './services/api';
+import { DEFAULT_API_URL } from './config';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   PieChart as RechartsPie, Pie, Cell, Legend
@@ -259,7 +261,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
   const [extendUser, setExtendUser] = useState(null);
   const [extendType, setExtendType] = useState('1');
   const [customYears, setCustomYears] = useState('2');
-  const [promoConfig, setPromoConfig] = useState({ Promo_Message: '', Price_1Year: '', Price_Bundle: '', Price_Lifetime: '' });
+  const [promoConfig, setPromoConfig] = useState({ Promo_Message: '', Price_1Year: '', Price_Bundle: '', Price_Lifetime: '', Promo_FreeTest: 'true' });
 
   useEffect(() => {
     loadUsers();
@@ -276,17 +278,29 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
       setActiveUsers(active || []);
       if (configData && !configData.error) {
         setPromoConfig(configData);
+        if (configData.Admin_Folder_ID) {
+          setFolderId(configData.Admin_Folder_ID);
+          localStorage.setItem('gas_folder_id', configData.Admin_Folder_ID);
+        }
       }
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleSaveFolderId = (e) => {
+  const handleSaveFolderId = async (e) => {
     e.preventDefault();
+    setLoading(true);
     localStorage.setItem('gas_folder_id', folderId);
-    setMessage({ type: 'success', text: "Folder ID berhasil disimpan." });
-    setTimeout(() => setMessage(null), 3000);
+    try {
+      await updateConfig({ Admin_Folder_ID: folderId });
+      setMessage({ type: 'success', text: "Folder ID berhasil disimpan di sistem." });
+    } catch (err) {
+      setMessage({ type: 'error', text: "Gagal menyimpan Folder ID di server." });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(null), 3000);
+    }
   };
 
   const handleApprove = (email) => {
@@ -445,27 +459,37 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
         <form onSubmit={handleSavePromo} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Pesan Sambutan Promosi</label>
-            <textarea 
-              className="form-control" 
+            <textarea
+              className="form-control"
               rows="3"
-              value={promoConfig.Promo_Message || ''} 
-              onChange={e => setPromoConfig({...promoConfig, Promo_Message: e.target.value})}
-              placeholder="Misal: Catat pengeluaran Anda dengan cerdas..." 
+              value={promoConfig.Promo_Message || ''}
+              onChange={e => setPromoConfig({ ...promoConfig, Promo_Message: e.target.value })}
+              placeholder="Misal: Catat pengeluaran Anda dengan cerdas..."
             />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga 1 Tahun</label>
-              <input type="text" className="form-control" value={promoConfig.Price_1Year || ''} onChange={e => setPromoConfig({...promoConfig, Price_1Year: e.target.value})} placeholder="Rp 50.000" />
+              <input type="text" className="form-control" value={promoConfig.Price_1Year || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_1Year: e.target.value })} placeholder="Rp 50.000" />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga Bundling</label>
-              <input type="text" className="form-control" value={promoConfig.Price_Bundle || ''} onChange={e => setPromoConfig({...promoConfig, Price_Bundle: e.target.value})} placeholder="Rp 90.000 / 2 Tahun" />
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga Bundling 2 Tahun</label>
+              <input type="text" className="form-control" value={promoConfig.Price_Bundle || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_Bundle: e.target.value })} placeholder="Rp 90.000 / 2 Tahun" />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga Seumur Hidup</label>
-              <input type="text" className="form-control" value={promoConfig.Price_Lifetime || ''} onChange={e => setPromoConfig({...promoConfig, Price_Lifetime: e.target.value})} placeholder="Rp 250.000" />
+              <input type="text" className="form-control" value={promoConfig.Price_Lifetime || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_Lifetime: e.target.value })} placeholder="Rp 250.000" />
             </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <input 
+              type="checkbox" 
+              id="promoFreeTest"
+              checked={promoConfig.Promo_FreeTest === 'true' || promoConfig.Promo_FreeTest === true}
+              onChange={e => setPromoConfig({ ...promoConfig, Promo_FreeTest: e.target.checked ? 'true' : 'false' })}
+              style={{ width: '1.2rem', height: '1.2rem' }}
+            />
+            <label htmlFor="promoFreeTest" style={{ cursor: 'pointer', userSelect: 'none' }}>Tampilkan tombol "Coba Gratis 5 Hari"</label>
           </div>
           <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Promosi</button>
         </form>
@@ -476,7 +500,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
           Daftar pengguna yang telah mendaftar dan menunggu persetujuan Anda. Menyetujui pengguna akan membuat spreadsheet baru di folder yang diatur di atas.
         </p>
-        
+
         {pendingUsers.length === 0 ? (
           <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--glass-bg)', borderRadius: '8px' }}>
             Tidak ada permintaan pendaftaran tertunda.
@@ -565,7 +589,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
                 Seumur Hidup (Lifetime)
               </label>
             </div>
-            
+
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
               <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setApproveUserEmail(null)}>Batal</button>
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={executeApprove}>Konfirmasi Setujui</button>
@@ -598,7 +622,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
                 Seumur Hidup (Lifetime)
               </label>
             </div>
-            
+
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
               <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setExtendUser(null)}>Batal</button>
               <button className="btn btn-primary" style={{ flex: 1 }} onClick={executeExtend}>Simpan</button>
@@ -672,40 +696,37 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
     }
   };
 
+  const handleFreeTrial = async () => {
+    if (!apiUrl) {
+      setMessage({ type: 'error', text: 'Mohon atur URL API terlebih dahulu melalui menu Pengaturan di pojok kanan atas.' });
+      return;
+    }
+    if (!email) {
+      setMessage({ type: 'error', text: 'Silakan isi email di kotak masuk di atas sebelum mencoba Free Trial.' });
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await registerFreeTrial(email);
+      if (res.success) {
+        setMessage({ type: 'success', text: "Pendaftaran berhasil! Spreadsheet Free Test Anda telah dibuat. Silakan klik tombol 'Masuk' di atas untuk masuk." });
+      } else {
+        setMessage({ type: 'error', text: res.error });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: "Terjadi kesalahan jaringan." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem 1rem', gap: '2rem' }}>
-      
-      {appConfig && appConfig.Promo_Message && (
-        <div className="card" style={{ maxWidth: '700px', width: '100%', textAlign: 'center', background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', border: '1px solid var(--primary)' }}>
-          <h2 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Selamat Datang di FamilyFin!</h2>
-          <p style={{ fontSize: '1.1rem', marginBottom: '2rem', lineHeight: '1.6' }}>{appConfig.Promo_Message}</p>
-          
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-            {appConfig.Price_1Year && (
-              <div style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', background: 'rgba(255,255,255,0.5)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                <div style={{ fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Paket 1 Tahun</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{appConfig.Price_1Year}</div>
-              </div>
-            )}
-            {appConfig.Price_Bundle && (
-              <div style={{ padding: '1.5rem', border: '1px solid var(--success)', borderRadius: '12px', background: 'var(--success-bg)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                <div style={{ fontWeight: 'bold', color: 'var(--success)', marginBottom: '0.5rem' }}>Paket Bundling</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{appConfig.Price_Bundle}</div>
-              </div>
-            )}
-            {appConfig.Price_Lifetime && (
-              <div style={{ padding: '1.5rem', border: '1px solid var(--warning)', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.15)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                <div style={{ fontWeight: 'bold', color: 'var(--warning)', marginBottom: '0.5rem' }}>Seumur Hidup</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>{appConfig.Price_Lifetime}</div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
         <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>{isLogin ? 'Masuk' : 'Daftar Akun'}</h2>
-        
+
         {message && (
           <div style={{ padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', background: message.type === 'error' ? 'var(--danger-bg)' : 'var(--success-bg)', color: message.type === 'error' ? 'var(--danger)' : 'var(--success)' }}>
             {message.text}
@@ -729,6 +750,50 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
           </span>
         </p>
       </div>
+
+      {appConfig && appConfig.Promo_Message && (
+        <div className="card" style={{ maxWidth: '700px', width: '100%', textAlign: 'center', background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', border: '1px solid var(--primary)' }}>
+          <h2 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Selamat Datang di FamilyFin!</h2>
+          <p style={{ fontSize: '1.1rem', marginBottom: '2rem', lineHeight: '1.6' }}>{appConfig.Promo_Message}</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            {appConfig.Price_1Year && (
+              <div style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', background: 'rgba(255,255,255,0.5)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <div style={{ fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Paket 1 Tahun</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{appConfig.Price_1Year}</div>
+              </div>
+            )}
+            {appConfig.Price_Bundle && (
+              <div style={{ padding: '1.5rem', border: '1px solid var(--success)', borderRadius: '12px', background: 'var(--success-bg)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <div style={{ fontWeight: 'bold', color: 'var(--success)', marginBottom: '0.5rem' }}>Paket Bundling</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{appConfig.Price_Bundle}</div>
+              </div>
+            )}
+            {appConfig.Price_Lifetime && (
+              <div style={{ padding: '1.5rem', border: '1px solid var(--warning)', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.15)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                <div style={{ fontWeight: 'bold', color: 'var(--warning)', marginBottom: '0.5rem' }}>Seumur Hidup</div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>{appConfig.Price_Lifetime}</div>
+              </div>
+            )}
+          </div>
+          
+          {(appConfig.Promo_FreeTest === 'true' || appConfig.Promo_FreeTest === true) && (
+            <div style={{ marginTop: '2rem' }}>
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', maxWidth: '300px', fontSize: '1.1rem', padding: '0.75rem', background: 'var(--primary)', borderColor: 'var(--primary)' }}
+                onClick={handleFreeTrial}
+                disabled={loading}
+              >
+                {loading ? 'Memproses...' : 'Coba Gratis 5 Hari'}
+              </button>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                *Masukkan email Anda di kotak atas lalu klik tombol ini untuk langsung mencoba!
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -740,9 +805,9 @@ function App() {
       return stored ? JSON.parse(stored) : null;
     } catch { return null; }
   });
-  
+
   const [activeTab, setActiveTab] = useState(currentUser ? (currentUser.spreadsheetId ? 'home' : 'admin') : 'login');
-  const [apiUrl, setApiUrl] = useState(localStorage.getItem('gas_api_url') || '');
+  const [apiUrl, setApiUrl] = useState(localStorage.getItem('gas_api_url') || DEFAULT_API_URL);
   const [showSettings, setShowSettings] = useState(false);
 
   const [transactions, setTransactions] = useState([]);
@@ -865,7 +930,7 @@ function App() {
           </div>
         ) : (
           !apiUrl && (
-            <div 
+            <div
               style={{ cursor: 'pointer', color: 'white', padding: '0.5rem', background: 'rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onClick={() => setShowSettings(true)}
             >
@@ -953,7 +1018,7 @@ function App() {
               <span>Kategori</span>
             </div>
           )}
-          
+
           <div className={`bottom-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
             <User size={22} />
             <span>Pengaturan</span>
