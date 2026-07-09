@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import {
   LayoutDashboard,
   ArrowRightLeft,
@@ -482,8 +483,8 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               id="promoFreeTest"
               checked={promoConfig.Promo_FreeTest === 'true' || promoConfig.Promo_FreeTest === true}
               onChange={e => setPromoConfig({ ...promoConfig, Promo_FreeTest: e.target.checked ? 'true' : 'false' })}
@@ -776,11 +777,11 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
               </div>
             )}
           </div>
-          
-          {(appConfig.Promo_FreeTest === 'true' || appConfig.Promo_FreeTest === true) && (
+
+          {(appConfig.Promo_FreeTest === 'true' || appConfig.Promo_FreeTest === true || appConfig.Promo_FreeTest === undefined) && (
             <div style={{ marginTop: '2rem' }}>
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 style={{ width: '100%', maxWidth: '300px', fontSize: '1.1rem', padding: '0.75rem', background: 'var(--primary)', borderColor: 'var(--primary)' }}
                 onClick={handleFreeTrial}
                 disabled={loading}
@@ -886,6 +887,30 @@ function App() {
     setApiUrl(url);
   };
 
+  const handleBackup = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+
+      const wsTransactions = XLSX.utils.json_to_sheet(transactions.length ? transactions : [{ Catatan: "Belum ada transaksi" }]);
+      XLSX.utils.book_append_sheet(wb, wsTransactions, "Transaksi");
+
+      const wsWallets = XLSX.utils.json_to_sheet(wallets.length ? wallets : [{ Catatan: "Belum ada dompet" }]);
+      XLSX.utils.book_append_sheet(wb, wsWallets, "Dompet");
+
+      const wsDebts = XLSX.utils.json_to_sheet(debts.length ? debts : [{ Catatan: "Belum ada hutang" }]);
+      XLSX.utils.book_append_sheet(wb, wsDebts, "Hutang");
+
+      const wsCategories = XLSX.utils.json_to_sheet(categories.length ? categories : [{ Catatan: "Belum ada kategori" }]);
+      XLSX.utils.book_append_sheet(wb, wsCategories, "Kategori");
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(wb, `FamilyFin_Backup_${dateStr}.xlsx`);
+    } catch (err) {
+      console.error("Backup failed", err);
+      alert("Gagal melakukan backup data.");
+    }
+  };
+
   return (
     <div className="app-layout">
       {/* Top Header */}
@@ -905,17 +930,11 @@ function App() {
                 <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
                   <LayoutDashboard size={18} /> Statistik
                 </div>
-                <div className={`nav-item ${activeTab === 'wallets' ? 'active' : ''}`} onClick={() => setActiveTab('wallets')}>
-                  <CreditCard size={18} /> Dompet
-                </div>
                 <div className={`nav-item ${activeTab === 'debts' ? 'active' : ''}`} onClick={() => setActiveTab('debts')}>
                   <Receipt size={18} /> Hutang
                 </div>
                 <div className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}>
                   <ArrowRightLeft size={18} /> Transaksi
-                </div>
-                <div className={`nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
-                  <Tags size={18} /> Kategori
                 </div>
                 <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
                   <Settings size={18} /> Pengaturan
@@ -943,9 +962,12 @@ function App() {
       {/* Main Content */}
       <div className="main-content">
         {subscriptionWarning && (
-          <div style={{ background: 'var(--warning-bg)', color: 'var(--warning)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span><strong>Perhatian:</strong> {subscriptionWarning}</span>
-            <button className="btn btn-outline" style={{ borderColor: 'var(--warning)', color: 'var(--warning)', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setSubscriptionWarning(null)}>Tutup</button>
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '2px solid #dc2626', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)', gap: '1rem' }}>
+            <span style={{ fontSize: '1rem', flex: 1 }}><strong>Perhatian:</strong> {subscriptionWarning}</span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button className="btn btn-primary" style={{ background: '#dc2626', borderColor: '#dc2626', padding: '0.25rem 0.5rem', fontSize: '0.8rem', fontWeight: 'bold' }} onClick={() => setActiveTab('settings')}>Perpanjang Sekarang</button>
+              <button className="btn btn-outline" style={{ borderColor: '#dc2626', color: '#dc2626', background: 'transparent', padding: '0.25rem 0.5rem', fontSize: '0.8rem', fontWeight: 'bold' }} onClick={handleBackup} onMouseEnter={e => { e.target.style.background = '#dc2626'; e.target.style.color = 'white'; }} onMouseLeave={e => { e.target.style.background = 'transparent'; e.target.style.color = '#dc2626'; }}>Backup Data</button>
+            </div>
           </div>
         )}
         {error && (
@@ -962,18 +984,18 @@ function App() {
             {activeTab === 'home' && <HomeTab setActiveTab={setActiveTab} />}
             {activeTab === 'dashboard' && <DashboardTab transactions={transactions} wallets={wallets} isLoading={isLoading} />}
             {activeTab === 'transactions' && <TransactionsTab transactions={transactions} categories={categories} wallets={wallets} onRefresh={loadData} isLoading={isLoading} />}
-            {activeTab === 'categories' && <CategoriesTab categories={categories} onRefresh={loadData} isLoading={isLoading} />}
-            {activeTab === 'wallets' && <WalletsTab wallets={wallets} onRefresh={loadData} isLoading={isLoading} />}
             {activeTab === 'debts' && <DebtsTab debts={debts} transactions={transactions} wallets={wallets} onRefresh={loadData} isLoading={isLoading} />}
             {activeTab === 'settings' && (
-              <div className="card">
-                <h2>Pengaturan Profil</h2>
-                <div style={{ marginTop: '1.5rem', marginBottom: '1rem', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-                  <h4 style={{ margin: '0 0 0.5rem 0' }}>Akun Saat Ini</h4>
-                  <p style={{ margin: 0, color: 'var(--text-muted)' }}>{currentUser.email} {currentUser.role === 'admin' ? '(Admin)' : ''}</p>
-                  <button className="btn btn-outline" style={{ marginTop: '1rem' }} onClick={handleLogout}>Keluar (Logout)</button>
-                </div>
-              </div>
+              <SettingsTab
+                currentUser={currentUser}
+                appConfig={appConfig}
+                handleLogout={handleLogout}
+                categories={categories}
+                wallets={wallets}
+                loadData={loadData}
+                isLoading={isLoading}
+                handleBackup={handleBackup}
+              />
             )}
           </>
         )}
@@ -990,10 +1012,6 @@ function App() {
             <LayoutDashboard size={22} />
             <span>Statistik</span>
           </div>
-          <div className={`bottom-nav-item ${activeTab === 'wallets' ? 'active' : ''}`} onClick={() => setActiveTab('wallets')}>
-            <CreditCard size={22} />
-            <span>Dompet</span>
-          </div>
 
           {/* Center Add Button */}
           <div className="bottom-nav-item" onClick={() => setActiveTab('transactions')}>
@@ -1007,15 +1025,10 @@ function App() {
             <span>Hutang</span>
           </div>
 
-          {currentUser.role === 'admin' ? (
+          {currentUser.role === 'admin' && (
             <div className={`bottom-nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
               <Shield size={22} />
               <span>Admin</span>
-            </div>
-          ) : (
-            <div className={`bottom-nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
-              <Tags size={22} />
-              <span>Kategori</span>
             </div>
           )}
 
@@ -1823,6 +1836,134 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
           {(Array.isArray(debts) ? debts : []).length === 0 && (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', gridColumn: '1 / -1' }}>Belum ada catatan hutang.</p>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets, loadData, isLoading, handleBackup }) {
+  const [showExtendModal, setShowExtendModal] = useState(false);
+  const [openAccordion, setOpenAccordion] = useState(null); // 'wallets' or 'categories'
+
+  const handleExtend = (pkgName) => {
+    const waNumber = appConfig?.Admin_WA || currentUser?.adminWa || '';
+    if (!waNumber) {
+      alert("Nomor WhatsApp Admin belum diatur.");
+      return;
+    }
+    const text = encodeURIComponent(`Halo Admin, saya ingin memperpanjang masa aktif akun saya (${currentUser.email}) dengan paket ${pkgName}.`);
+    window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
+    setShowExtendModal(false);
+  };
+
+  let daysLeft = null;
+  if (currentUser?.expiry) {
+    const expD = new Date(currentUser.expiry);
+    const today = new Date();
+    const diffTime = expD.getTime() - today.getTime();
+    daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+  
+  // Also check if warning is present just in case, but daysLeft is more accurate for UI here
+  const isExpiringSoon = (daysLeft !== null && daysLeft <= 5) || !!currentUser?.warning;
+  const infoColor = isExpiringSoon ? '#dc2626' : 'var(--success)';
+
+  return (
+    <div className="card">
+      <h2 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Pengaturan Profil</h2>
+
+      {/* Account Info Box */}
+      <div style={{ marginBottom: '1.5rem', padding: '1.5rem', background: isExpiringSoon ? 'rgba(239, 68, 68, 0.05)' : 'var(--glass-bg)', borderRadius: '12px', border: `1px solid ${isExpiringSoon ? '#dc2626' : 'var(--glass-border)'}` }}>
+        <h3 style={{ margin: '0 0 1rem 0', color: infoColor }}>Akun Saat Ini</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ color: infoColor }}>
+            <p style={{ margin: '0 0 0.5rem 0', fontWeight: 'bold' }}>{currentUser.email} {currentUser.role === 'admin' ? '(Admin)' : ''}</p>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>
+              Masa Aktif: {currentUser.expiry ? new Date(currentUser.expiry).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Selamanya'}
+              {daysLeft !== null && (
+                <span style={{ display: 'block', marginTop: '0.25rem', fontWeight: 'bold' }}>
+                  (Sisa {daysLeft} hari)
+                </span>
+              )}
+            </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
+            {isExpiringSoon && (
+              <button className="btn btn-primary" style={{ background: 'var(--warning)', borderColor: 'var(--warning)', width: '100%' }} onClick={() => setShowExtendModal(true)}>
+                Perpanjang
+              </button>
+            )}
+            <button className="btn btn-outline" style={{ width: '100%' }} onClick={handleBackup}>
+              Backup Data
+            </button>
+          </div>
+        </div>
+        <button className="btn btn-outline" style={{ marginTop: '1.5rem' }} onClick={handleLogout}>Keluar (Logout)</button>
+      </div>
+
+      {/* Accordions for Dompet and Kategori */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        {/* Accordion Dompet */}
+        <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div
+            style={{ padding: '1rem 1.5rem', background: 'var(--glass-bg)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold' }}
+            onClick={() => setOpenAccordion(openAccordion === 'wallets' ? null : 'wallets')}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <CreditCard size={20} color="var(--primary)" /> Manajemen Dompet
+            </div>
+            <span>{openAccordion === 'wallets' ? '▲' : '▼'}</span>
+          </div>
+          {openAccordion === 'wallets' && (
+            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.3)', borderTop: '1px solid var(--glass-border)' }}>
+              <WalletsTab wallets={wallets} onRefresh={loadData} isLoading={isLoading} />
+            </div>
+          )}
+        </div>
+
+        {/* Accordion Kategori */}
+        <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div
+            style={{ padding: '1rem 1.5rem', background: 'var(--glass-bg)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold' }}
+            onClick={() => setOpenAccordion(openAccordion === 'categories' ? null : 'categories')}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Tags size={20} color="var(--primary)" /> Manajemen Kategori
+            </div>
+            <span>{openAccordion === 'categories' ? '▲' : '▼'}</span>
+          </div>
+          {openAccordion === 'categories' && (
+            <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.3)', borderTop: '1px solid var(--glass-border)' }}>
+              <CategoriesTab categories={categories} onRefresh={loadData} isLoading={isLoading} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Extend Modal */}
+      {showExtendModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--primary)', marginBottom: '1rem' }}>Pilih Paket Perpanjangan</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {appConfig?.Price_1Year && (
+                <button className="btn btn-outline" style={{ display: 'flex', justifyContent: 'space-between' }} onClick={() => handleExtend('1 Tahun')}>
+                  <span>1 Tahun</span> <strong>{appConfig.Price_1Year}</strong>
+                </button>
+              )}
+              {appConfig?.Price_Bundle && (
+                <button className="btn btn-outline" style={{ display: 'flex', justifyContent: 'space-between', borderColor: 'var(--success)', color: 'var(--success)' }} onClick={() => handleExtend('Bundling (2 Tahun)')}>
+                  <span>Bundling 2 Tahun</span> <strong>{appConfig.Price_Bundle}</strong>
+                </button>
+              )}
+              {appConfig?.Price_Lifetime && (
+                <button className="btn btn-outline" style={{ display: 'flex', justifyContent: 'space-between', borderColor: 'var(--warning)', color: 'var(--warning)' }} onClick={() => handleExtend('Seumur Hidup')}>
+                  <span>Seumur Hidup</span> <strong>{appConfig.Price_Lifetime}</strong>
+                </button>
+              )}
+            </div>
+            <button className="btn btn-outline" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setShowExtendModal(false)}>Batal</button>
+          </div>
         </div>
       )}
     </div>
