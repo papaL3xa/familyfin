@@ -496,6 +496,34 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
         </form>
       </div>
 
+      <div className="card" style={{ marginBottom: '2rem' }}>
+        <h3>Pengaturan Metode Pembayaran</h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+          Atur nomor rekening, e-wallet, dan QRIS yang akan ditampilkan saat pengguna membeli paket langganan.
+        </p>
+        <form onSubmit={handleSavePromo} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>No. DANA</label>
+              <input type="text" className="form-control" value={promoConfig.Payment_DANA || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_DANA: e.target.value })} placeholder="0812xxxx" />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>No. ShopeePay</label>
+              <input type="text" className="form-control" value={promoConfig.Payment_SPay || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_SPay: e.target.value })} placeholder="0812xxxx" />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>No. Rekening Mandiri</label>
+              <input type="text" className="form-control" value={promoConfig.Payment_Mandiri || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_Mandiri: e.target.value })} placeholder="112xxxx" />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>URL Gambar QRIS</label>
+              <input type="url" className="form-control" value={promoConfig.Payment_QRIS || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_QRIS: e.target.value })} placeholder="https://..." />
+            </div>
+          </div>
+          <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Metode Pembayaran</button>
+        </form>
+      </div>
+
       <div className="card">
         <h3>Permintaan Pendaftaran Tertunda</h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
@@ -759,19 +787,19 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             {appConfig.Price_1Year && (
-              <div style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', background: 'rgba(255,255,255,0.5)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+              <div onClick={() => handlePackageClick('1 Tahun')} style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', background: 'rgba(255,255,255,0.5)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
                 <div style={{ fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Paket 1 Tahun</div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{appConfig.Price_1Year}</div>
               </div>
             )}
             {appConfig.Price_Bundle && (
-              <div style={{ padding: '1.5rem', border: '1px solid var(--success)', borderRadius: '12px', background: 'var(--success-bg)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+              <div onClick={() => handlePackageClick('Bundling (2 Tahun)')} style={{ padding: '1.5rem', border: '1px solid var(--success)', borderRadius: '12px', background: 'var(--success-bg)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
                 <div style={{ fontWeight: 'bold', color: 'var(--success)', marginBottom: '0.5rem' }}>Paket Bundling</div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{appConfig.Price_Bundle}</div>
               </div>
             )}
             {appConfig.Price_Lifetime && (
-              <div style={{ padding: '1.5rem', border: '1px solid var(--warning)', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.15)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+              <div onClick={() => handlePackageClick('Seumur Hidup')} style={{ padding: '1.5rem', border: '1px solid var(--warning)', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.15)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
                 <div style={{ fontWeight: 'bold', color: 'var(--warning)', marginBottom: '0.5rem' }}>Seumur Hidup</div>
                 <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>{appConfig.Price_Lifetime}</div>
               </div>
@@ -794,6 +822,16 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
             </div>
           )}
         </div>
+      )}
+
+      {/* Payment Modal for New Subscription */}
+      {selectedPackage && (
+        <PaymentModal 
+          pkgName={selectedPackage} 
+          appConfig={appConfig} 
+          currentUser={{ email: email }} 
+          onClose={() => setSelectedPackage(null)} 
+        />
       )}
     </div>
   );
@@ -1841,19 +1879,100 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
     </div>
   );
 }
-function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets, loadData, isLoading, handleBackup }) {
-  const [showExtendModal, setShowExtendModal] = useState(false);
-  const [openAccordion, setOpenAccordion] = useState(null); // 'wallets' or 'categories'
 
-  const handleExtend = (pkgName) => {
+function PaymentModal({ pkgName, appConfig, currentUser, onClose }) {
+  const handleCopy = (text) => {
+    navigator.clipboard.writeText(text);
+    alert("Berhasil disalin!");
+  };
+
+  const handleConfirm = () => {
     const waNumber = appConfig?.Admin_WA || currentUser?.adminWa || '';
     if (!waNumber) {
       alert("Nomor WhatsApp Admin belum diatur.");
       return;
     }
-    const text = encodeURIComponent(`Halo Admin, saya ingin memperpanjang masa aktif akun saya (${currentUser.email}) dengan paket ${pkgName}.`);
+    const email = currentUser?.email ? `(${currentUser.email})` : '';
+    const text = encodeURIComponent(`Halo Admin, saya ingin berlangganan/memperpanjang akun saya ${email} dengan paket ${pkgName}. Saya telah melakukan pembayaran.`);
     window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
-    setShowExtendModal(false);
+    onClose();
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '1rem', backdropFilter: 'blur(5px)' }}>
+      <div className="card" style={{ maxWidth: '450px', width: '100%', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', maxHeight: '90vh', overflowY: 'auto' }}>
+        <h3 style={{ marginTop: 0, color: 'var(--primary)', marginBottom: '1rem', textAlign: 'center' }}>Instruksi Pembayaran</h3>
+        <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+          Anda memilih paket <strong>{pkgName}</strong>.<br/>Silakan selesaikan pembayaran ke salah satu metode di bawah ini.
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+          {appConfig?.Payment_DANA && (
+            <div style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#118ee9' }}>DANA</div>
+                <div style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>{appConfig.Payment_DANA}</div>
+              </div>
+              <button className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => handleCopy(appConfig.Payment_DANA)}>Copy</button>
+            </div>
+          )}
+          
+          {appConfig?.Payment_SPay && (
+            <div style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#ee4d2d' }}>ShopeePay</div>
+                <div style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>{appConfig.Payment_SPay}</div>
+              </div>
+              <button className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => handleCopy(appConfig.Payment_SPay)}>Copy</button>
+            </div>
+          )}
+
+          {appConfig?.Payment_Mandiri && (
+            <div style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 'bold', color: '#003d79' }}>Mandiri</div>
+                <div style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>{appConfig.Payment_Mandiri}</div>
+              </div>
+              <button className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => handleCopy(appConfig.Payment_Mandiri)}>Copy</button>
+            </div>
+          )}
+
+          {appConfig?.Payment_QRIS && (
+            <div style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>QRIS</div>
+              <img src={appConfig.Payment_QRIS} alt="QRIS" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #ccc' }} />
+              <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => window.open(appConfig.Payment_QRIS, '_blank')}>
+                Download / Buka QRIS
+              </button>
+            </div>
+          )}
+
+          {!appConfig?.Payment_DANA && !appConfig?.Payment_SPay && !appConfig?.Payment_Mandiri && !appConfig?.Payment_QRIS && (
+            <p style={{ textAlign: 'center', color: 'var(--danger)', fontSize: '0.9rem' }}>
+              Admin belum mengatur metode pembayaran. Silakan hubungi admin langsung via WhatsApp.
+            </p>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <button className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }} onClick={handleConfirm}>
+            Konfirmasi via WhatsApp
+          </button>
+          <button className="btn btn-outline" style={{ width: '100%', padding: '0.75rem' }} onClick={onClose}>
+            Batal
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets, loadData, isLoading, handleBackup }) {
+  const [showExtendModal, setShowExtendModal] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [openAccordion, setOpenAccordion] = useState(null); // 'wallets' or 'categories'
+
+  const handleExtend = (pkgName) => {
+    setSelectedPackage(pkgName);
   };
 
   let daysLeft = null;
@@ -1941,7 +2060,7 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
       </div>
 
       {/* Extend Modal */}
-      {showExtendModal && (
+      {showExtendModal && !selectedPackage && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
           <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
             <h3 style={{ marginTop: 0, color: 'var(--primary)', marginBottom: '1rem' }}>Pilih Paket Perpanjangan</h3>
@@ -1965,6 +2084,16 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
             <button className="btn btn-outline" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setShowExtendModal(false)}>Batal</button>
           </div>
         </div>
+      )}
+      
+      {/* Payment Modal for Extend */}
+      {selectedPackage && (
+        <PaymentModal 
+          pkgName={selectedPackage} 
+          appConfig={appConfig} 
+          currentUser={currentUser} 
+          onClose={() => { setSelectedPackage(null); setShowExtendModal(false); }} 
+        />
       )}
     </div>
   );
