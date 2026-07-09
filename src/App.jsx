@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
+import { QRCodeCanvas } from 'qrcode.react';
 import {
   LayoutDashboard,
   ArrowRightLeft,
@@ -265,7 +266,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
   const [extendUser, setExtendUser] = useState(null);
   const [extendType, setExtendType] = useState('1');
   const [customYears, setCustomYears] = useState('2');
-  const [promoConfig, setPromoConfig] = useState({ Promo_Message: '', Price_1Year: '', Price_Bundle: '', Price_Lifetime: '', Promo_FreeTest: 'true' });
+  const [promoConfig, setPromoConfig] = useState({ Promo_Message: '', Price_1Year: '', Price_Bundle: '', Price_Lifetime: '', Promo_FreeTest: 'true', Payment_QRIS_Data: '', Payment_AdminFee: '' });
 
   useEffect(() => {
     loadUsers();
@@ -519,8 +520,16 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
               <input type="text" className="form-control" value={promoConfig.Payment_Mandiri || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_Mandiri: e.target.value })} placeholder="112xxxx" />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>URL Gambar QRIS</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>URL Gambar QRIS (Statis)</label>
               <input type="url" className="form-control" value={promoConfig.Payment_QRIS || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_QRIS: e.target.value })} placeholder="https://..." />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Data Teks QRIS (Opsional untuk Dinamis)</label>
+              <input type="text" className="form-control" value={promoConfig.Payment_QRIS_Data || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_QRIS_Data: e.target.value })} placeholder="000201010211..." />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Biaya Admin (Opsional)</label>
+              <input type="number" className="form-control" value={promoConfig.Payment_AdminFee || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_AdminFee: e.target.value })} placeholder="Contoh: 2500" />
             </div>
           </div>
           <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Metode Pembayaran</button>
@@ -2080,6 +2089,24 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
 }
 
 function PaymentModal({ pkgName, appConfig, currentUser, onClose }) {
+  const [invoiceNumber] = useState(Math.floor(Math.random() * 9000000) + 1000000);
+  const [automationFee] = useState(Math.floor(Math.random() * 900) + 100);
+  const [showSummary, setShowSummary] = useState(true);
+
+  const parsePrice = (priceStr) => {
+    if (!priceStr) return 0;
+    const num = parseInt(priceStr.replace(/[^0-9]/g, ''), 10);
+    return isNaN(num) ? 0 : num;
+  };
+
+  let basePrice = 0;
+  if (pkgName.includes('1 Tahun')) basePrice = parsePrice(appConfig?.Price_1Year);
+  else if (pkgName.includes('Bundling')) basePrice = parsePrice(appConfig?.Price_Bundle);
+  else if (pkgName.includes('Seumur Hidup')) basePrice = parsePrice(appConfig?.Price_Lifetime);
+
+  const adminFee = appConfig?.Payment_AdminFee ? parseInt(appConfig.Payment_AdminFee, 10) : 0;
+  const totalPrice = basePrice + adminFee + automationFee;
+
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
     alert("Berhasil disalin!");
@@ -2092,75 +2119,196 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose }) {
       return;
     }
     const email = currentUser?.email ? `(${currentUser.email})` : '';
-    const text = encodeURIComponent(`Halo Admin, saya ingin berlangganan/memperpanjang akun saya ${email} dengan paket ${pkgName}. Saya telah melakukan pembayaran.`);
+    const text = encodeURIComponent(`Halo Admin, saya ingin berlangganan/memperpanjang akun saya ${email} dengan paket ${pkgName}.\n\n*Invoice:* ${invoiceNumber}\n*Total Transfer:* Rp ${totalPrice.toLocaleString('id-ID')}\n\nSaya telah melakukan pembayaran.`);
     window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
     onClose();
   };
 
+  const getQrisImgSrc = (url) => {
+    if (url && url.includes('drive.google.com/file/d/')) {
+      const match = url.match(/\/d\/(.*?)\//);
+      if (match && match[1]) {
+        return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+      }
+    }
+    return url;
+  };
+  const staticQrisImgSrc = appConfig?.Payment_QRIS ? getQrisImgSrc(appConfig.Payment_QRIS) : null;
+
+  const generateDynamicQRIS = (qrisStr, nominal) => {
+    if (!qrisStr || !nominal) return qrisStr;
+    const crc16 = (s) => {
+      let crc = 0xFFFF;
+      for (let i = 0; i < s.length; i++) {
+        crc ^= (s.charCodeAt(i) << 8);
+        for (let j = 0; j < 8; j++) {
+          if ((crc & 0x8000) !== 0) crc = (crc << 1) ^ 0x1021;
+          else crc = crc << 1;
+        }
+      }
+      return (crc & 0xFFFF).toString(16).toUpperCase().padStart(4, '0');
+    };
+  
+    let baseStr = qrisStr;
+    const crcIndex = qrisStr.lastIndexOf('6304');
+    if (crcIndex !== -1) {
+      baseStr = qrisStr.substring(0, crcIndex);
+    } else return qrisStr; 
+  
+    try {
+      const tags = {};
+      let i = 0;
+      while (i < baseStr.length) {
+        const id = baseStr.substring(i, i + 2);
+        const length = parseInt(baseStr.substring(i + 2, i + 4), 10);
+        const value = baseStr.substring(i + 4, i + 4 + length);
+        tags[id] = value;
+        i += 4 + length;
+      }
+      
+      tags['54'] = nominal.toString();
+      
+      let newPayload = '';
+      for (let k = 0; k <= 62; k++) {
+        const key = k.toString().padStart(2, '0');
+        if (tags[key]) {
+          const v = tags[key];
+          const l = v.length.toString().padStart(2, '0');
+          newPayload += `${key}${l}${v}`;
+        }
+      }
+      newPayload += '6304';
+      return newPayload + crc16(newPayload);
+    } catch (e) {
+      return qrisStr;
+    }
+  };
+
+  const dynamicQrisPayload = appConfig?.Payment_QRIS_Data ? generateDynamicQRIS(appConfig.Payment_QRIS_Data, totalPrice) : null;
+
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '1rem', backdropFilter: 'blur(5px)' }}>
-      <div className="card" style={{ maxWidth: '450px', width: '100%', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', maxHeight: '90vh', overflowY: 'auto' }}>
-        <h3 style={{ marginTop: 0, color: 'var(--primary)', marginBottom: '1rem', textAlign: 'center' }}>Instruksi Pembayaran</h3>
-        <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
-          Anda memilih paket <strong>{pkgName}</strong>.<br/>Silakan selesaikan pembayaran ke salah satu metode di bawah ini.
-        </p>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '1rem', backdropFilter: 'blur(5px)' }}>
+      <div className="card" style={{ maxWidth: '420px', width: '100%', background: '#ffffff', border: 'none', borderRadius: '16px', maxHeight: '95vh', overflowY: 'auto', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+        
+        {/* Header Invoice */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+          <div>
+            <h2 style={{ margin: 0, color: '#1f2937', fontSize: '1.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Receipt size={24} /> QRIS
+            </h2>
+            <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.25rem' }}>Otomatis Terdeteksi</div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>Status</div>
+            <div style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '0.9rem' }}>Dalam Proses</div>
+          </div>
+        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
-          {appConfig?.Payment_DANA && (
-            <div style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 'bold', color: '#118ee9' }}>DANA</div>
-                <div style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>{appConfig.Payment_DANA}</div>
-              </div>
-              <button className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => handleCopy(appConfig.Payment_DANA)}>Copy</button>
-            </div>
-          )}
+        {/* Invoice Body */}
+        <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#374151' }}>
+          <div style={{ fontSize: '0.9rem', marginBottom: '1rem', color: '#6b7280' }}>
+            Invoice: <strong style={{ color: '#374151' }}>{invoiceNumber}</strong>
+          </div>
           
-          {appConfig?.Payment_SPay && (
-            <div style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 'bold', color: '#ee4d2d' }}>ShopeePay</div>
-                <div style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>{appConfig.Payment_SPay}</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', padding: '1rem', background: '#f9fafb', borderRadius: '12px' }}>
+            {dynamicQrisPayload ? (
+              <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                <QRCodeCanvas value={dynamicQrisPayload} size={220} level={"M"} />
               </div>
-              <button className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => handleCopy(appConfig.Payment_SPay)}>Copy</button>
-            </div>
-          )}
-
-          {appConfig?.Payment_Mandiri && (
-            <div style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'rgba(255,255,255,0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <div style={{ fontWeight: 'bold', color: '#003d79' }}>Mandiri</div>
-                <div style={{ fontSize: '1.1rem', letterSpacing: '1px' }}>{appConfig.Payment_Mandiri}</div>
-              </div>
-              <button className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => handleCopy(appConfig.Payment_Mandiri)}>Copy</button>
-            </div>
-          )}
-
-          {appConfig?.Payment_QRIS && (
-            <div style={{ padding: '1rem', border: '1px solid var(--glass-border)', borderRadius: '8px', background: 'rgba(255,255,255,0.4)', textAlign: 'center' }}>
-              <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>QRIS</div>
-              <img src={appConfig.Payment_QRIS} alt="QRIS" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #ccc' }} />
-              <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => window.open(appConfig.Payment_QRIS, '_blank')}>
-                Download / Buka QRIS
-              </button>
-            </div>
-          )}
-
-          {!appConfig?.Payment_DANA && !appConfig?.Payment_SPay && !appConfig?.Payment_Mandiri && !appConfig?.Payment_QRIS && (
-            <p style={{ textAlign: 'center', color: 'var(--danger)', fontSize: '0.9rem' }}>
-              Admin belum mengatur metode pembayaran. Silakan hubungi admin langsung via WhatsApp.
-            </p>
+            ) : staticQrisImgSrc ? (
+              <img src={staticQrisImgSrc} alt="QRIS" style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+            ) : (
+              <div style={{ padding: '2rem', color: '#9ca3af' }}>QRIS Belum Diatur</div>
+            )}
+          </div>
+          
+          {(!dynamicQrisPayload && staticQrisImgSrc) && (
+            <button className="btn" style={{ background: 'transparent', color: '#0ea5e9', fontSize: '0.9rem', fontWeight: '600', padding: 0 }} onClick={() => window.open(staticQrisImgSrc || '#', '_blank')}>
+              Download QR Code
+            </button>
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <button className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }} onClick={handleConfirm}>
-            Konfirmasi via WhatsApp
+        {/* Payment Summary */}
+        <div style={{ borderTop: '1px solid #f0f0f0', borderBottom: '1px solid #f0f0f0', paddingTop: '1rem', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+          <div 
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: '600', color: '#4b5563' }}
+            onClick={() => setShowSummary(!showSummary)}
+          >
+            <span>Ringkasan Pembayaran</span>
+            <ChevronDown style={{ transform: showSummary ? 'rotate(180deg)' : 'none', transition: '0.3s' }} size={20} />
+          </div>
+          
+          {showSummary && (
+            <div style={{ fontSize: '0.9rem', color: '#6b7280', marginTop: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span>Harga Paket ({pkgName})</span>
+                <span>{basePrice.toLocaleString('id-ID')}</span>
+              </div>
+              {adminFee > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span>Biaya Admin</span>
+                  <span>{adminFee.toLocaleString('id-ID')}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px dashed #e5e7eb' }}>
+                <span>Kode Unik / Automation Fee</span>
+                <span>{automationFee.toLocaleString('id-ID')}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', color: '#1f2937', fontSize: '1.25rem' }}>
+                <span>Total Bayar</span>
+                <span style={{ color: '#f59e0b' }}>Rp {totalPrice.toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* E-Wallets Fallback */}
+        {(appConfig?.Payment_DANA || appConfig?.Payment_SPay || appConfig?.Payment_Mandiri) && (
+          <div style={{ marginBottom: '1.5rem' }}>
+            <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.75rem', textAlign: 'center' }}>Atau transfer manual ke:</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {appConfig?.Payment_DANA && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontWeight: '600', color: '#118ee9' }}>DANA</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ color: '#475569', fontSize: '0.9rem' }}>{appConfig.Payment_DANA}</span>
+                    <button onClick={() => handleCopy(appConfig.Payment_DANA)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}>Copy</button>
+                  </div>
+                </div>
+              )}
+              {appConfig?.Payment_SPay && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontWeight: '600', color: '#ee4d2d' }}>ShopeePay</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ color: '#475569', fontSize: '0.9rem' }}>{appConfig.Payment_SPay}</span>
+                    <button onClick={() => handleCopy(appConfig.Payment_SPay)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}>Copy</button>
+                  </div>
+                </div>
+              )}
+              {appConfig?.Payment_Mandiri && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontWeight: '600', color: '#003d79' }}>Mandiri</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span style={{ color: '#475569', fontSize: '0.9rem' }}>{appConfig.Payment_Mandiri}</span>
+                    <button onClick={() => handleCopy(appConfig.Payment_Mandiri)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}>Copy</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <button className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', background: '#0ea5e9', borderColor: '#0ea5e9', fontSize: '1rem', fontWeight: 'bold', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(14, 165, 233, 0.4)' }} onClick={handleConfirm}>
+            Check Status Pembayaran
           </button>
-          <button className="btn btn-outline" style={{ width: '100%', padding: '0.75rem' }} onClick={onClose}>
+          <button className="btn btn-outline" style={{ width: '100%', padding: '0.875rem', border: 'none', color: '#9ca3af', fontWeight: '600' }} onClick={onClose}>
             Batal
           </button>
         </div>
+
       </div>
     </div>
   );
