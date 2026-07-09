@@ -268,6 +268,18 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
   const [customYears, setCustomYears] = useState('2');
   const [promoConfig, setPromoConfig] = useState({ Promo_Message: '', Price_1Year: '', Price_Bundle: '', Price_Lifetime: '', Promo_FreeTest: 'true', Payment_QRIS_Data: '', Payment_AdminFee: '' });
 
+  const [editMode, setEditMode] = useState({
+    googleDrive: false,
+    webAppUrl: false,
+    promo: false,
+    payment: false,
+    activeUsers: false,
+  });
+
+  const toggleEdit = (section) => {
+    setEditMode(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
   useEffect(() => {
     loadUsers();
   }, []);
@@ -356,6 +368,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
       setMessage({ type: 'error', text: "Terjadi kesalahan." });
     } finally {
       setLoading(false);
+      setConfirmReject(null);
     }
   };
 
@@ -462,32 +475,49 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', alignItems: 'start', marginBottom: '2rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div className="card" style={{ marginBottom: '2rem' }}>
-        <h3>Pengaturan Google Drive</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0 }}>Pengaturan Google Drive</h3>
+          <button type="button" className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => toggleEdit('googleDrive')}>
+            {editMode.googleDrive ? 'Batal' : 'Edit'}
+          </button>
+        </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
           Masukkan Folder ID tempat spreadsheet baru akan dibuat secara otomatis saat menyetujui pengguna.
         </p>
         <form onSubmit={handleSaveFolderId} style={{ display: 'flex', gap: '1rem' }}>
-          <input type="text" className="form-control" value={folderId} onChange={e => setFolderId(e.target.value)} placeholder="Contoh: 1BxiMVs0XRY..." required style={{ flex: 1 }} />
-          <button type="submit" className="btn btn-primary">Simpan</button>
+          <input type="text" className="form-control" value={folderId} onChange={e => setFolderId(e.target.value)} placeholder="Contoh: 1BxiMVs0XRY..." required style={{ flex: 1 }} disabled={!editMode.googleDrive} />
+          {editMode.googleDrive && <button type="submit" className="btn btn-primary">Simpan</button>}
         </form>
       </div>
 
       <div className="card" style={{ marginBottom: '2rem' }}>
-        <h3>Pengaturan Web App URL</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0 }}>Pengaturan Web App URL</h3>
+          <button type="button" className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => toggleEdit('webAppUrl')}>
+            {editMode.webAppUrl ? 'Batal' : 'Edit'}
+          </button>
+        </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
           Tautan Google Apps Script Anda. Ubah hanya jika Anda mendeploy ulang script dengan URL baru.
         </p>
         <form onSubmit={onSaveApiUrl} style={{ display: 'flex', gap: '1rem' }}>
-          <input type="url" name="apiUrl" defaultValue={apiUrl} className="form-control" placeholder="https://script.google.com/macros/s/.../exec" required style={{ flex: 1 }} />
-          <button type="submit" className="btn btn-primary" onClick={() => {
-            setMessage({ type: 'success', text: "Web App URL berhasil diperbarui." });
-            setTimeout(() => setMessage(null), 3000);
-          }}>Perbarui URL</button>
+          <input type="url" name="apiUrl" defaultValue={apiUrl} className="form-control" placeholder="https://script.google.com/macros/s/.../exec" required style={{ flex: 1 }} disabled={!editMode.webAppUrl} />
+          {editMode.webAppUrl && (
+            <button type="submit" className="btn btn-primary" onClick={() => {
+              setMessage({ type: 'success', text: "Web App URL berhasil diperbarui." });
+              setTimeout(() => setMessage(null), 3000);
+            }}>Perbarui URL</button>
+          )}
         </form>
       </div>
 
       <div className="card" style={{ marginBottom: '2rem' }}>
-        <h3>Pengaturan Promosi & Harga</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0 }}>Pengaturan Promosi & Harga</h3>
+          <button type="button" className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => toggleEdit('promo')}>
+            {editMode.promo ? 'Batal' : 'Edit'}
+          </button>
+        </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
           Ubah pesan sambutan dan daftar harga berlangganan yang akan muncul di layar awal.
         </p>
@@ -500,20 +530,21 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
               value={promoConfig.Promo_Message || ''}
               onChange={e => setPromoConfig({ ...promoConfig, Promo_Message: e.target.value })}
               placeholder="Misal: Catat pengeluaran Anda dengan cerdas..."
+              disabled={!editMode.promo}
             />
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga 1 Tahun</label>
-              <input type="text" className="form-control" value={promoConfig.Price_1Year || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_1Year: e.target.value })} placeholder="Rp 50.000" />
+              <input type="text" className="form-control" value={promoConfig.Price_1Year || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_1Year: e.target.value })} placeholder="Rp 50.000" disabled={!editMode.promo} />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga Bundling 2 Tahun</label>
-              <input type="text" className="form-control" value={promoConfig.Price_Bundle || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_Bundle: e.target.value })} placeholder="Rp 90.000 / 2 Tahun" />
+              <input type="text" className="form-control" value={promoConfig.Price_Bundle || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_Bundle: e.target.value })} placeholder="Rp 90.000 / 2 Tahun" disabled={!editMode.promo} />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Harga Seumur Hidup</label>
-              <input type="text" className="form-control" value={promoConfig.Price_Lifetime || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_Lifetime: e.target.value })} placeholder="Rp 250.000" />
+              <input type="text" className="form-control" value={promoConfig.Price_Lifetime || ''} onChange={e => setPromoConfig({ ...promoConfig, Price_Lifetime: e.target.value })} placeholder="Rp 250.000" disabled={!editMode.promo} />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
@@ -523,15 +554,21 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
               checked={promoConfig.Promo_FreeTest === 'true' || promoConfig.Promo_FreeTest === true}
               onChange={e => setPromoConfig({ ...promoConfig, Promo_FreeTest: e.target.checked ? 'true' : 'false' })}
               style={{ width: '1.2rem', height: '1.2rem' }}
+              disabled={!editMode.promo}
             />
-            <label htmlFor="promoFreeTest" style={{ cursor: 'pointer', userSelect: 'none' }}>Tampilkan tombol "Coba Gratis 5 Hari"</label>
+            <label htmlFor="promoFreeTest" style={{ cursor: 'pointer', userSelect: 'none', color: !editMode.promo ? 'var(--text-muted)' : 'inherit' }}>Tampilkan tombol "Coba Gratis 5 Hari"</label>
           </div>
-          <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Promosi</button>
+          {editMode.promo && <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Promosi</button>}
         </form>
       </div>
 
       <div className="card" style={{ marginBottom: '2rem' }}>
-        <h3>Pengaturan Metode Pembayaran</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0 }}>Pengaturan Metode Pembayaran</h3>
+          <button type="button" className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => toggleEdit('payment')}>
+            {editMode.payment ? 'Batal' : 'Edit'}
+          </button>
+        </div>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
           Atur nomor rekening, e-wallet, dan QRIS yang akan ditampilkan saat pengguna membeli paket langganan.
         </p>
@@ -539,32 +576,32 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>No. DANA</label>
-              <input type="text" className="form-control" value={promoConfig.Payment_DANA || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_DANA: e.target.value })} placeholder="0812xxxx" />
+              <input type="text" className="form-control" value={promoConfig.Payment_DANA || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_DANA: e.target.value })} placeholder="0812xxxx" disabled={!editMode.payment} />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>No. ShopeePay</label>
-              <input type="text" className="form-control" value={promoConfig.Payment_SPay || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_SPay: e.target.value })} placeholder="0812xxxx" />
+              <input type="text" className="form-control" value={promoConfig.Payment_SPay || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_SPay: e.target.value })} placeholder="0812xxxx" disabled={!editMode.payment} />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>No. Rekening Mandiri</label>
-              <input type="text" className="form-control" value={promoConfig.Payment_Mandiri || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_Mandiri: e.target.value })} placeholder="112xxxx" />
+              <input type="text" className="form-control" value={promoConfig.Payment_Mandiri || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_Mandiri: e.target.value })} placeholder="112xxxx" disabled={!editMode.payment} />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>URL Gambar QRIS (Statis)</label>
-              <input type="url" className="form-control" value={promoConfig.Payment_QRIS || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_QRIS: e.target.value })} placeholder="https://..." />
+              <input type="url" className="form-control" value={promoConfig.Payment_QRIS || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_QRIS: e.target.value })} placeholder="https://..." disabled={!editMode.payment} />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Data Teks QRIS (Opsional untuk Dinamis)</label>
-              <input type="text" className="form-control" value={promoConfig.Payment_QRIS_Data || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_QRIS_Data: e.target.value })} placeholder="000201010211..." />
+              <input type="text" className="form-control" value={promoConfig.Payment_QRIS_Data || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_QRIS_Data: e.target.value })} placeholder="000201010211..." disabled={!editMode.payment} />
             </div>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Biaya Admin (Opsional)</label>
-              <input type="number" className="form-control" value={promoConfig.Payment_AdminFee || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_AdminFee: e.target.value })} placeholder="Contoh: 2500" />
+              <input type="number" className="form-control" value={promoConfig.Payment_AdminFee || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_AdminFee: e.target.value })} placeholder="Contoh: 2500" disabled={!editMode.payment} />
             </div>
           </div>
-          <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Metode Pembayaran</button>
+          {editMode.payment && <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Metode Pembayaran</button>}
         </form>
-          </div>
+      </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -601,7 +638,12 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
         </div>
 
         <div className="card" style={{ margin: 0 }}>
-          <h3>Daftar Pengguna Aktif</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0 }}>Daftar Pengguna Aktif</h3>
+            <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }} onClick={() => toggleEdit('activeUsers')}>
+              {editMode.activeUsers ? 'Selesai' : 'Edit'}
+            </button>
+          </div>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
             Kelola pengguna yang sudah disetujui. Anda dapat memblokir pengguna atau memperpanjang masa aktif langganan mereka (diakumulasi jika belum jatuh tempo).
           </p>
@@ -624,14 +666,16 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
                       <div>Jatuh Tempo: <strong>{u.expiry ? new Date(u.expiry).toLocaleString('id-ID') : 'Tidak diketahui'}</strong></div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button className="btn btn-outline" onClick={() => handleToggleBlock(u.email)} disabled={loading} style={{ borderColor: u.status === 'Blocked' ? 'var(--success)' : 'var(--warning)', color: u.status === 'Blocked' ? 'var(--success)' : 'var(--warning)' }}>
-                      {u.status === 'Blocked' ? 'Buka Blokir' : 'Blokir'}
-                    </button>
-                    <button className="btn btn-primary" onClick={() => setExtendUser(u.email)} disabled={loading}>
-                      Perpanjang
-                    </button>
-                  </div>
+                  {editMode.activeUsers && (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button className="btn btn-outline" onClick={() => handleToggleBlock(u.email)} disabled={loading} style={{ borderColor: u.status === 'Blocked' ? 'var(--success)' : 'var(--warning)', color: u.status === 'Blocked' ? 'var(--success)' : 'var(--warning)' }}>
+                        {u.status === 'Blocked' ? 'Buka Blokir' : 'Blokir'}
+                      </button>
+                      <button className="btn btn-primary" onClick={() => setExtendUser(u.email)} disabled={loading}>
+                        Perpanjang
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -641,8 +685,8 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
     </div>
 
       {approveUserEmail && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             <h3 style={{ marginTop: 0 }}>Setujui Pengguna</h3>
             <p style={{ color: 'var(--text-muted)' }}>
               Pilih masa aktif berlangganan untuk <strong>{approveUserEmail}</strong>.
@@ -665,17 +709,37 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
               </label>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setApproveUserEmail(null)}>Batal</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={executeApprove}>Konfirmasi Setujui</button>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', flexDirection: 'column' }}>
+              {loading ? (
+                <div style={{ padding: '1rem 0' }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginBottom: '0.5rem', textAlign: 'center', fontWeight: 'bold' }}>Sedang Membuat Spreadsheet & Sinkronisasi...</div>
+                  <div style={{ width: '100%', height: '8px', background: 'var(--glass-border)', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
+                    <div style={{
+                      position: 'absolute',
+                      top: 0, bottom: 0,
+                      background: 'var(--primary)',
+                      width: '50%',
+                      animation: 'progress-indeterminate 1.5s infinite linear',
+                      borderRadius: '4px'
+                    }} />
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                  <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setApproveUserEmail(null)}>Batal</button>
+                  <button className="btn btn-primary" style={{ flex: 1 }} onClick={executeApprove}>
+                    Konfirmasi Setujui
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
       {extendUser && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             <h3 style={{ marginTop: 0 }}>Perpanjang Masa Aktif</h3>
             <p style={{ color: 'var(--text-muted)' }}>
               Pilih durasi perpanjangan berlangganan untuk <strong>{extendUser}</strong>.
@@ -699,27 +763,27 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setExtendUser(null)}>Batal</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={executeExtend}>Simpan</button>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setExtendUser(null)} disabled={loading}>Batal</button>
+              <button className="btn btn-primary" style={{ flex: 1 }} onClick={executeExtend} disabled={loading}>
+                {loading ? 'Menyimpan...' : 'Simpan'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {confirmReject && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             <h3 style={{ marginTop: 0 }}>Konfirmasi Penolakan</h3>
             <p style={{ color: 'var(--text-muted)' }}>
               Apakah Anda yakin ingin menolak dan menghapus pendaftaran <strong>{confirmReject}</strong>?
             </p>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem' }}>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setConfirmReject(null)}>Batal</button>
-              <button className="btn btn-primary" style={{ flex: 1, background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => {
-                const email = confirmReject;
-                setConfirmReject(null);
-                executeReject(email);
-              }}>Tolak Pendaftaran</button>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setConfirmReject(null)} disabled={loading}>Batal</button>
+              <button className="btn btn-primary" style={{ flex: 1, background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={() => executeReject(confirmReject)} disabled={loading}>
+                {loading ? 'Menolak...' : 'Tolak Pendaftaran'}
+              </button>
             </div>
           </div>
         </div>
@@ -806,7 +870,7 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
         const res = await registerFreeTrial(email);
         if (res.success) {
           setMessage({ type: 'success', text: "Pendaftaran berhasil! Spreadsheet Free Test Anda telah dibuat. Silakan masuk." });
-          setTimeout(() => setIsLogin(true), 3000);
+          setTimeout(() => { setIsLogin(true); setMessage(null); }, 3000);
         } else {
           setMessage({ type: 'error', text: res.error });
         }
@@ -820,7 +884,7 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
 
     try {
       const res = await registerUser(email, phone, selectedPackage);
-      if (res.success || res.error === "Email sudah terdaftar") {
+      if (res.success) {
         setShowPayment(true);
       } else {
         setMessage({ type: 'error', text: res.error });
@@ -834,12 +898,30 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
 
   if (isLogin) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem 1rem', gap: '2rem' }}>
-        <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '5vh', padding: '1rem', gap: '1.5rem' }}>
+        <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '2rem 1.5rem' }}>
+          {appConfig?.Promo_Message && (
+            <div style={{ marginBottom: '1.5rem', textAlign: 'center', padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', border: '1px solid rgba(99, 102, 241, 0.2)', borderRadius: '8px', color: 'var(--primary)', fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.4' }}>
+              ✨ {appConfig.Promo_Message}
+            </div>
+          )}
           <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Masuk</h2>
           {message && (
-            <div style={{ padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', background: message.type === 'error' ? 'var(--danger-bg)' : 'var(--success-bg)', color: message.type === 'error' ? 'var(--danger)' : 'var(--success)' }}>
-              {message.text}
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+              <div className="card" style={{ maxWidth: '350px', width: '100%', background: '#fff', padding: '2rem', borderRadius: '16px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+                  {message.type === 'error' ? '❌' : '✅'}
+                </div>
+                <h3 style={{ color: message.type === 'error' ? 'var(--danger)' : 'var(--success)', marginBottom: '1rem' }}>
+                  {message.type === 'error' ? 'Terjadi Kesalahan' : 'Berhasil'}
+                </h3>
+                <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                  {message.text}
+                </p>
+                <button className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px' }} onClick={() => setMessage(null)}>
+                  Tutup
+                </button>
+              </div>
             </div>
           )}
           <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -847,7 +929,7 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Email</label>
               <input type="email" className="form-control" value={email} onChange={e => setEmail(e.target.value)} required placeholder="Budi@gmail.com" />
             </div>
-            <button type="submit" className="btn btn-primary" disabled={loading}>
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: '0.5rem' }}>
               {loading ? 'Memproses...' : 'Masuk'}
             </button>
           </form>
@@ -868,12 +950,25 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
       </p>
 
       {message && (
-        <div style={{ padding: '1rem', borderRadius: '8px', marginBottom: '2rem', background: message.type === 'error' ? 'var(--danger-bg)' : 'var(--success-bg)', color: message.type === 'error' ? 'var(--danger)' : 'var(--success)' }}>
-          {message.text}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '350px', width: '100%', background: '#fff', padding: '2rem', borderRadius: '16px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>
+              {message.type === 'error' ? '❌' : '✅'}
+            </div>
+            <h3 style={{ color: message.type === 'error' ? 'var(--danger)' : 'var(--success)', marginBottom: '1rem' }}>
+              {message.type === 'error' ? 'Terjadi Kesalahan' : 'Berhasil'}
+            </h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+              {message.text}
+            </p>
+            <button className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', borderRadius: '8px' }} onClick={() => setMessage(null)}>
+              Tutup
+            </button>
+          </div>
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '2rem', alignItems: 'start' }}>
         {/* LEFT COLUMN: PACKAGES */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {appConfig && appConfig.Price_1Year && (
@@ -2172,48 +2267,60 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
                     Bayar Hutang Ini
                   </button>
                 )}
-
-                {payingDebt?.id === debt.id && (
-                  <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-                    <h5 style={{ margin: '0 0 1rem 0' }}>Form Pembayaran</h5>
-                    <form onSubmit={handlePayDebt} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <div>
-                        <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Tanggal</label>
-                        <GlassDatePicker name="date" required style={{ width: '100%' }} />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Ambil dari Dompet</label>
-                        <GlassSelect
-                          name="wallet"
-                          required
-                          options={[
-                            { label: 'Pilih Dompet...', value: '' },
-                            ...wallets.map(w => ({ label: w.name, value: w.name }))
-                          ]}
-                          style={{ width: '100%' }}
-                        />
-                      </div>
-                      <div>
-                        <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Nominal (Rp)</label>
-                        <CurrencyInput name="amount" className="form-control" defaultValue={remaining} required style={{ padding: '0.5rem' }} />
-                      </div>
-                      <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.5rem' }} disabled={isSubmitting}>
-                          {isSubmitting ? '...' : 'Bayar'}
-                        </button>
-                        <button type="button" className="btn btn-outline" style={{ padding: '0.5rem' }} onClick={() => setPayingDebt(null)}>
-                          Batal
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                )}
               </div>
             );
           })}
           {(Array.isArray(debts) ? debts : []).length === 0 && (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', gridColumn: '1 / -1' }}>Belum ada catatan hutang.</p>
           )}
+        </div>
+      )}
+
+      {/* Popup Modal Form Pembayaran Hutang */}
+      {payingDebt && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: '0 0 1rem 0' }}>Form Pembayaran</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Pelunasan: <strong>{payingDebt.name}</strong></p>
+            <form onSubmit={handlePayDebt} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Tanggal</label>
+                <GlassDatePicker name="date" required style={{ width: '100%' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Ambil dari Dompet</label>
+                <GlassSelect
+                  name="wallet"
+                  required
+                  options={[
+                    { label: 'Pilih Dompet...', value: '' },
+                    ...wallets.map(w => ({ label: w.name, value: w.name }))
+                  ]}
+                  style={{ width: '100%' }}
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Nominal (Rp)</label>
+                <CurrencyInput 
+                  name="amount" 
+                  className="form-control" 
+                  defaultValue={
+                    Number(payingDebt.amount) - transactions.filter(t => t.debt_id === payingDebt.id && t.type === 'Expense').reduce((sum, t) => sum + Number(t.amount), 0)
+                  } 
+                  required 
+                  style={{ padding: '0.5rem' }} 
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1, padding: '0.75rem', borderRadius: '8px' }} disabled={isSubmitting}>
+                  {isSubmitting ? 'Memproses...' : 'Bayar'}
+                </button>
+                <button type="button" className="btn btn-outline" style={{ flex: 1, padding: '0.75rem', borderRadius: '8px' }} onClick={() => setPayingDebt(null)}>
+                  Batal
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
@@ -2319,11 +2426,11 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
   const dynamicQrisPayload = appConfig?.Payment_QRIS_Data ? generateDynamicQRIS(appConfig.Payment_QRIS_Data, totalPrice) : null;
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '1rem', backdropFilter: 'blur(5px)' }}>
-      <div className="card" style={{ maxWidth: '420px', width: '100%', background: '#ffffff', border: 'none', borderRadius: '16px', maxHeight: '95vh', overflowY: 'auto', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '0.5rem', paddingBottom: '90px', backdropFilter: 'blur(5px)' }}>
+      <div className="card" style={{ maxWidth: '420px', width: '100%', background: '#ffffff', border: 'none', borderRadius: '16px', maxHeight: '98vh', overflowY: 'auto', padding: '1rem', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
         
         {/* Header Invoice */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
           <div>
             <h2 style={{ margin: 0, color: '#1f2937', fontSize: '1.5rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Receipt size={24} /> QRIS
@@ -2337,18 +2444,18 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
         </div>
 
         {/* Invoice Body */}
-        <div style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#374151' }}>
-          <div style={{ fontSize: '0.9rem', marginBottom: '1rem', color: '#6b7280' }}>
+        <div style={{ textAlign: 'center', marginBottom: '0.75rem', color: '#374151' }}>
+          <div style={{ fontSize: '0.85rem', marginBottom: '0.5rem', color: '#6b7280' }}>
             Invoice: <strong style={{ color: '#374151' }}>{invoiceNumber}</strong>
           </div>
           
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem', padding: '1rem', background: '#f9fafb', borderRadius: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem', padding: '0.75rem', background: '#f9fafb', borderRadius: '12px' }}>
             {dynamicQrisPayload ? (
-              <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-                <QRCodeCanvas value={dynamicQrisPayload} size={220} level={"M"} />
+              <div style={{ background: '#fff', padding: '0.5rem', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+                <QRCodeCanvas value={dynamicQrisPayload} size={180} level={"M"} />
               </div>
             ) : staticQrisImgSrc ? (
-              <img src={staticQrisImgSrc} alt="QRIS" style={{ maxWidth: '100%', maxHeight: '220px', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
+              <img src={staticQrisImgSrc} alt="QRIS" style={{ maxWidth: '100%', maxHeight: '180px', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }} />
             ) : (
               <div style={{ padding: '2rem', color: '#9ca3af' }}>QRIS Belum Diatur</div>
             )}
@@ -2362,7 +2469,7 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
         </div>
 
         {/* Payment Summary */}
-        <div style={{ borderTop: '1px solid #f0f0f0', borderBottom: '1px solid #f0f0f0', paddingTop: '1rem', paddingBottom: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ borderTop: '1px solid #f0f0f0', borderBottom: '1px solid #f0f0f0', paddingTop: '0.75rem', paddingBottom: '0.75rem', marginBottom: '0.75rem' }}>
           <div 
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', fontWeight: '600', color: '#4b5563' }}
             onClick={() => setShowSummary(!showSummary)}
@@ -2372,7 +2479,7 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
           </div>
           
           {showSummary && (
-            <div style={{ fontSize: '0.9rem', color: '#6b7280', marginTop: '1rem' }}>
+            <div style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '0.75rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                 <span>Harga Paket ({pkgName})</span>
                 <span>{basePrice.toLocaleString('id-ID')}</span>
@@ -2383,11 +2490,11 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
                   <span>{adminFee.toLocaleString('id-ID')}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', paddingBottom: '1rem', borderBottom: '1px dashed #e5e7eb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px dashed #e5e7eb' }}>
                 <span>Kode Unik / Automation Fee</span>
                 <span>{automationFee.toLocaleString('id-ID')}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', color: '#1f2937', fontSize: '1.25rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', color: '#1f2937', fontSize: '1.15rem' }}>
                 <span>Total Bayar</span>
                 <span style={{ color: '#f59e0b' }}>Rp {totalPrice.toLocaleString('id-ID')}</span>
               </div>
@@ -2397,33 +2504,33 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
 
         {/* E-Wallets Fallback */}
         {(appConfig?.Payment_DANA || appConfig?.Payment_SPay || appConfig?.Payment_Mandiri) && (
-          <div style={{ marginBottom: '1.5rem' }}>
-            <p style={{ fontSize: '0.85rem', color: '#9ca3af', marginBottom: '0.75rem', textAlign: 'center' }}>Atau transfer manual ke:</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ marginBottom: '0.75rem' }}>
+            <p style={{ fontSize: '0.8rem', color: '#9ca3af', marginBottom: '0.5rem', textAlign: 'center' }}>Atau transfer manual ke:</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
               {appConfig?.Payment_DANA && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ fontWeight: '600', color: '#118ee9' }}>DANA</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontWeight: '600', color: '#118ee9', fontSize: '0.85rem' }}>DANA</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ color: '#475569', fontSize: '0.9rem' }}>{appConfig.Payment_DANA}</span>
-                    <button onClick={() => handleCopy(appConfig.Payment_DANA)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}>Copy</button>
+                    <span style={{ color: '#475569', fontSize: '0.85rem' }}>{appConfig.Payment_DANA}</span>
+                    <button onClick={() => handleCopy(appConfig.Payment_DANA)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.8rem' }}>Copy</button>
                   </div>
                 </div>
               )}
               {appConfig?.Payment_SPay && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ fontWeight: '600', color: '#ee4d2d' }}>ShopeePay</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontWeight: '600', color: '#ee4d2d', fontSize: '0.85rem' }}>ShopeePay</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ color: '#475569', fontSize: '0.9rem' }}>{appConfig.Payment_SPay}</span>
-                    <button onClick={() => handleCopy(appConfig.Payment_SPay)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}>Copy</button>
+                    <span style={{ color: '#475569', fontSize: '0.85rem' }}>{appConfig.Payment_SPay}</span>
+                    <button onClick={() => handleCopy(appConfig.Payment_SPay)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.8rem' }}>Copy</button>
                   </div>
                 </div>
               )}
               {appConfig?.Payment_Mandiri && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                  <span style={{ fontWeight: '600', color: '#003d79' }}>Mandiri</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <span style={{ fontWeight: '600', color: '#003d79', fontSize: '0.85rem' }}>Mandiri</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ color: '#475569', fontSize: '0.9rem' }}>{appConfig.Payment_Mandiri}</span>
-                    <button onClick={() => handleCopy(appConfig.Payment_Mandiri)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.85rem' }}>Copy</button>
+                    <span style={{ color: '#475569', fontSize: '0.85rem' }}>{appConfig.Payment_Mandiri}</span>
+                    <button onClick={() => handleCopy(appConfig.Payment_Mandiri)} style={{ background: 'none', border: 'none', color: '#0ea5e9', cursor: 'pointer', fontWeight: '600', fontSize: '0.8rem' }}>Copy</button>
                   </div>
                 </div>
               )}
@@ -2432,11 +2539,11 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
         )}
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <button className="btn btn-primary" style={{ width: '100%', padding: '0.875rem', background: '#0ea5e9', borderColor: '#0ea5e9', fontSize: '1rem', fontWeight: 'bold', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(14, 165, 233, 0.4)' }} onClick={handleConfirm}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <button className="btn btn-primary" style={{ width: '100%', padding: '0.75rem', background: '#0ea5e9', borderColor: '#0ea5e9', fontSize: '0.95rem', fontWeight: 'bold', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(14, 165, 233, 0.4)' }} onClick={handleConfirm}>
             Check Status Pembayaran
           </button>
-          <button className="btn btn-outline" style={{ width: '100%', padding: '0.875rem', border: 'none', color: '#9ca3af', fontWeight: '600' }} onClick={onClose}>
+          <button className="btn btn-outline" style={{ width: '100%', padding: '0.6rem', border: 'none', color: '#9ca3af', fontWeight: '600' }} onClick={onClose}>
             Batal
           </button>
         </div>
@@ -2467,7 +2574,8 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
   const infoColor = isExpiringSoon ? '#dc2626' : 'var(--success)';
 
   return (
-    <div className="card">
+    <>
+      <div className="card">
       <h2 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Pengaturan Profil</h2>
 
       {/* Account Info Box */}
@@ -2537,11 +2645,12 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
           )}
         </div>
       </div>
+      </div>
 
       {/* Extend Modal */}
       {showExtendModal && !selectedPackage && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000 }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', margin: '1rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             <h3 style={{ marginTop: 0, color: 'var(--primary)', marginBottom: '1rem' }}>Pilih Paket Perpanjangan</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {appConfig?.Price_1Year && (
@@ -2574,7 +2683,7 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
           onClose={() => { setSelectedPackage(null); setShowExtendModal(false); }} 
         />
       )}
-    </div>
+    </>
   );
 }
 
