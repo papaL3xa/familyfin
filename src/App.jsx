@@ -690,6 +690,11 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+
+  const handlePackageClick = (pkgName) => {
+    setSelectedPackage(pkgName);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
