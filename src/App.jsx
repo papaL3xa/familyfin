@@ -418,11 +418,39 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
     }
   };
 
+  let daysLeft = null;
+  if (currentUser?.expiry) {
+    const expD = new Date(currentUser.expiry);
+    const today = new Date();
+    const diffTime = expD.getTime() - today.getTime();
+    daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }
+  const isExpiringSoon = (daysLeft !== null && daysLeft <= 5) || !!currentUser?.warning;
+  const infoColor = isExpiringSoon ? '#dc2626' : 'var(--success)';
+
   return (
-    <div style={{ padding: '1.5rem', maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <h2>Dasbor Admin</h2>
-        <button className="btn btn-outline" onClick={onLogout}>Keluar</button>
+    <div style={{ width: '100%' }}>
+      <h2 style={{ marginBottom: '1.5rem' }}>Dasbor Admin</h2>
+      
+      {/* Account Info Box */}
+      <div style={{ marginBottom: '2rem', padding: '1.5rem', background: isExpiringSoon ? 'rgba(239, 68, 68, 0.05)' : 'var(--glass-bg)', borderRadius: '12px', border: `1px solid ${isExpiringSoon ? '#dc2626' : 'var(--glass-border)'}` }}>
+        <h3 style={{ margin: '0 0 1rem 0', color: infoColor }}>Akun Saat Ini</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '1rem', alignItems: 'center' }}>
+          <div style={{ color: infoColor }}>
+            <p style={{ margin: '0 0 0.5rem 0', fontWeight: 'bold' }}>{currentUser.email} (Admin)</p>
+            <p style={{ margin: 0, fontSize: '0.9rem' }}>
+              Masa Aktif: {currentUser.expiry ? new Date(currentUser.expiry).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Selamanya'}
+              {daysLeft !== null && (
+                <span style={{ display: 'block', marginTop: '0.25rem', fontWeight: 'bold' }}>
+                  (Sisa {daysLeft} hari)
+                </span>
+              )}
+            </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-end' }}>
+            <button className="btn btn-outline" style={{ width: '100%' }} onClick={onLogout}>Keluar (Logout)</button>
+          </div>
+        </div>
       </div>
 
       {message && (
@@ -431,7 +459,9 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
         </div>
       )}
 
-      <div className="card" style={{ marginBottom: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', alignItems: 'start', marginBottom: '2rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="card" style={{ marginBottom: '2rem' }}>
         <h3>Pengaturan Google Drive</h3>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
           Masukkan Folder ID tempat spreadsheet baru akan dibuat secara otomatis saat menyetujui pengguna.
@@ -534,77 +564,81 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
           </div>
           <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Metode Pembayaran</button>
         </form>
-      </div>
-
-      <div className="card">
-        <h3>Permintaan Pendaftaran Tertunda</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-          Daftar pengguna yang telah mendaftar dan menunggu persetujuan Anda. Menyetujui pengguna akan membuat spreadsheet baru di folder yang diatur di atas.
-        </p>
-
-        {pendingUsers.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--glass-bg)', borderRadius: '8px' }}>
-            Tidak ada permintaan pendaftaran tertunda.
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {pendingUsers.map((u, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-                <div>
-                  <h4 style={{ margin: '0 0 0.25rem 0' }}>{u.email}</h4>
-                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mendaftar pada: {new Date(u.date).toLocaleString('id-ID')}</span>
-                </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-outline" onClick={() => handleReject(u.email)} disabled={loading} style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
-                    Tolak
-                  </button>
-                  <button className="btn btn-primary" onClick={() => handleApprove(u.email)} disabled={loading}>
-                    Setujui
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
 
-      <div className="card">
-        <h3>Daftar Pengguna Aktif</h3>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-          Kelola pengguna yang sudah disetujui. Anda dapat memblokir pengguna atau memperpanjang masa aktif langganan mereka (diakumulasi jika belum jatuh tempo).
-        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <div className="card" style={{ margin: 0 }}>
+          <h3>Permintaan Pendaftaran Tertunda</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Daftar pengguna yang telah mendaftar dan menunggu persetujuan Anda. Menyetujui pengguna akan membuat spreadsheet baru di folder yang diatur di atas.
+          </p>
 
-        {activeUsers.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--glass-bg)', borderRadius: '8px' }}>
-            Belum ada pengguna aktif.
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {activeUsers.map((u, i) => (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
-                <div>
-                  <h4 style={{ margin: '0 0 0.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {u.email}
-                    {u.status === 'Blocked' && <span style={{ fontSize: '0.75rem', padding: '0.1rem 0.4rem', background: 'var(--danger)', color: 'white', borderRadius: '4px' }}>Diblokir</span>}
-                  </h4>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <div>Daftar: {new Date(u.date).toLocaleString('id-ID')}</div>
-                    <div>Jatuh Tempo: <strong>{u.expiry ? new Date(u.expiry).toLocaleString('id-ID') : 'Tidak diketahui'}</strong></div>
+          {pendingUsers.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--glass-bg)', borderRadius: '8px' }}>
+              Tidak ada permintaan pendaftaran tertunda.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {pendingUsers.map((u, i) => (
+                <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.25rem 0' }}>{u.email}</h4>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Mendaftar pada: {new Date(u.date).toLocaleString('id-ID')}</span>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="btn btn-outline" onClick={() => handleReject(u.email)} disabled={loading} style={{ borderColor: 'var(--danger)', color: 'var(--danger)' }}>
+                      Tolak
+                    </button>
+                    <button className="btn btn-primary" onClick={() => handleApprove(u.email)} disabled={loading}>
+                      Setujui
+                    </button>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button className="btn btn-outline" onClick={() => handleToggleBlock(u.email)} disabled={loading} style={{ borderColor: u.status === 'Blocked' ? 'var(--success)' : 'var(--warning)', color: u.status === 'Blocked' ? 'var(--success)' : 'var(--warning)' }}>
-                    {u.status === 'Blocked' ? 'Buka Blokir' : 'Blokir'}
-                  </button>
-                  <button className="btn btn-primary" onClick={() => setExtendUser(u.email)} disabled={loading}>
-                    Perpanjang
-                  </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="card" style={{ margin: 0 }}>
+          <h3>Daftar Pengguna Aktif</h3>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Kelola pengguna yang sudah disetujui. Anda dapat memblokir pengguna atau memperpanjang masa aktif langganan mereka (diakumulasi jika belum jatuh tempo).
+          </p>
+
+          {activeUsers.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', background: 'var(--glass-bg)', borderRadius: '8px' }}>
+              Belum ada pengguna aktif.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {activeUsers.map((u, i) => (
+                <div key={i} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', background: 'var(--glass-bg)', borderRadius: '8px', border: '1px solid var(--glass-border)' }}>
+                  <div>
+                    <h4 style={{ margin: '0 0 0.25rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {u.email}
+                      {u.status === 'Blocked' && <span style={{ fontSize: '0.75rem', padding: '0.1rem 0.4rem', background: 'var(--danger)', color: 'white', borderRadius: '4px' }}>Diblokir</span>}
+                    </h4>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      <div>Daftar: {new Date(u.date).toLocaleString('id-ID')}</div>
+                      <div>Jatuh Tempo: <strong>{u.expiry ? new Date(u.expiry).toLocaleString('id-ID') : 'Tidak diketahui'}</strong></div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button className="btn btn-outline" onClick={() => handleToggleBlock(u.email)} disabled={loading} style={{ borderColor: u.status === 'Blocked' ? 'var(--success)' : 'var(--warning)', color: u.status === 'Blocked' ? 'var(--success)' : 'var(--warning)' }}>
+                      {u.status === 'Blocked' ? 'Buka Blokir' : 'Blokir'}
+                    </button>
+                    <button className="btn btn-primary" onClick={() => setExtendUser(u.email)} disabled={loading}>
+                      Perpanjang
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+    </div>
 
       {approveUserEmail && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)' }}>
@@ -696,16 +730,42 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
 
 function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
   const [isLogin, setIsLogin] = useState(true);
+  
+  // Form State
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  
+  // UI State
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
+
+  // Pre-calculated fees
+  const [automationFee] = useState(Math.floor(Math.random() * 900) + 100);
+
+  const parsePrice = (priceStr) => {
+    if (!priceStr) return 0;
+    const num = parseInt(priceStr.replace(/[^0-9]/g, ''), 10);
+    return isNaN(num) ? 0 : num;
+  };
+
+  const adminFee = appConfig?.Payment_AdminFee ? parseInt(appConfig.Payment_AdminFee, 10) : 0;
+  
+  let basePrice = 0;
+  if (selectedPackage === '1 Tahun') basePrice = parsePrice(appConfig?.Price_1Year);
+  else if (selectedPackage === 'Bundling (2 Tahun)') basePrice = parsePrice(appConfig?.Price_Bundle);
+  else if (selectedPackage === 'Seumur Hidup') basePrice = parsePrice(appConfig?.Price_Lifetime);
+  
+  const totalPrice = basePrice + adminFee + automationFee;
 
   const handlePackageClick = (pkgName) => {
     setSelectedPackage(pkgName);
+    setMessage(null);
   };
 
-  const handleSubmit = async (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     if (!apiUrl) {
       setMessage({ type: 'error', text: 'Mohon atur URL API terlebih dahulu melalui menu Pengaturan di pojok kanan atas.' });
@@ -714,49 +774,9 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
     setLoading(true);
     setMessage(null);
     try {
-      if (isLogin) {
-        const res = await loginUser(email);
-        if (res.success) {
-          onLoginSuccess(res);
-        } else {
-          setMessage({ type: 'error', text: res.error });
-        }
-      } else {
-        const res = await registerUser(email);
-        if (res.success || res.error === "Email sudah terdaftar") {
-          const conf = await getConfig();
-          if (conf.adminWa) {
-            const waText = encodeURIComponent(`Halo Admin, saya ingin mendaftar aplikasi FamilyFin dengan email: ${email}`);
-            window.open(`https://wa.me/${conf.adminWa}?text=${waText}`, '_blank');
-          }
-          setMessage({ type: 'success', text: "Pendaftaran berhasil dikirim. Menunggu persetujuan admin." });
-          setIsLogin(true);
-        } else {
-          setMessage({ type: 'error', text: res.error });
-        }
-      }
-    } catch (err) {
-      setMessage({ type: 'error', text: "Terjadi kesalahan jaringan." });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleFreeTrial = async () => {
-    if (!apiUrl) {
-      setMessage({ type: 'error', text: 'Mohon atur URL API terlebih dahulu melalui menu Pengaturan di pojok kanan atas.' });
-      return;
-    }
-    if (!email) {
-      setMessage({ type: 'error', text: 'Silakan isi email di kotak masuk di atas sebelum mencoba Free Trial.' });
-      return;
-    }
-    setLoading(true);
-    setMessage(null);
-    try {
-      const res = await registerFreeTrial(email);
+      const res = await loginUser(email);
       if (res.success) {
-        setMessage({ type: 'success', text: "Pendaftaran berhasil! Spreadsheet Free Test Anda telah dibuat. Silakan klik tombol 'Masuk' di atas untuk masuk." });
+        onLoginSuccess(res);
       } else {
         setMessage({ type: 'error', text: res.error });
       }
@@ -767,87 +787,193 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
     }
   };
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem 1rem', gap: '2rem' }}>
+  const handleCheckoutSubmit = async (e) => {
+    e.preventDefault();
+    if (!apiUrl) {
+      setMessage({ type: 'error', text: 'Mohon atur URL API terlebih dahulu melalui menu Pengaturan di pojok kanan atas.' });
+      return;
+    }
+    if (!agreed) {
+      setMessage({ type: 'error', text: 'Anda harus menyetujui syarat & ketentuan untuk melanjutkan.' });
+      return;
+    }
+    
+    setLoading(true);
+    setMessage(null);
 
-      <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>{isLogin ? 'Masuk' : 'Daftar Akun'}</h2>
+    if (selectedPackage === 'Coba Gratis 5 Hari') {
+      try {
+        const res = await registerFreeTrial(email);
+        if (res.success) {
+          setMessage({ type: 'success', text: "Pendaftaran berhasil! Spreadsheet Free Test Anda telah dibuat. Silakan masuk." });
+          setTimeout(() => setIsLogin(true), 3000);
+        } else {
+          setMessage({ type: 'error', text: res.error });
+        }
+      } catch (err) {
+        setMessage({ type: 'error', text: "Terjadi kesalahan jaringan." });
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
 
-        {message && (
-          <div style={{ padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', background: message.type === 'error' ? 'var(--danger-bg)' : 'var(--success-bg)', color: message.type === 'error' ? 'var(--danger)' : 'var(--success)' }}>
-            {message.text}
-          </div>
-        )}
+    try {
+      const res = await registerUser(email, phone, selectedPackage);
+      if (res.success || res.error === "Email sudah terdaftar") {
+        setShowPayment(true);
+      } else {
+        setMessage({ type: 'error', text: res.error });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: "Terjadi kesalahan jaringan." });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Email</label>
-            <input type="email" className="form-control" value={email} onChange={e => setEmail(e.target.value)} required placeholder="Budi@gmail.com" />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Memproses...' : isLogin ? 'Masuk' : 'Kirim Pendaftaran ke WhatsApp'}
-          </button>
-        </form>
-
-        <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          {isLogin ? "Belum punya akun? " : "Sudah punya akun? "}
-          <span style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => { setIsLogin(!isLogin); setMessage(null); }}>
-            {isLogin ? "Daftar di sini" : "Masuk di sini"}
-          </span>
-        </p>
-      </div>
-
-      {appConfig && appConfig.Promo_Message && (
-        <div className="card" style={{ maxWidth: '700px', width: '100%', textAlign: 'center', background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', border: '1px solid var(--primary)' }}>
-          <h2 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>Selamat Datang di FamilyFin!</h2>
-          <p style={{ fontSize: '1.1rem', marginBottom: '2rem', lineHeight: '1.6' }}>{appConfig.Promo_Message}</p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-            {appConfig.Price_1Year && (
-              <div onClick={() => handlePackageClick('1 Tahun')} style={{ padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '12px', background: 'rgba(255,255,255,0.5)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                <div style={{ fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Paket 1 Tahun</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{appConfig.Price_1Year}</div>
-              </div>
-            )}
-            {appConfig.Price_Bundle && (
-              <div onClick={() => handlePackageClick('Bundling (2 Tahun)')} style={{ padding: '1.5rem', border: '1px solid var(--success)', borderRadius: '12px', background: 'var(--success-bg)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                <div style={{ fontWeight: 'bold', color: 'var(--success)', marginBottom: '0.5rem' }}>Paket Bundling</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{appConfig.Price_Bundle}</div>
-              </div>
-            )}
-            {appConfig.Price_Lifetime && (
-              <div onClick={() => handlePackageClick('Seumur Hidup')} style={{ padding: '1.5rem', border: '1px solid var(--warning)', borderRadius: '12px', background: 'rgba(245, 158, 11, 0.15)', transition: 'transform 0.2s', cursor: 'pointer' }} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                <div style={{ fontWeight: 'bold', color: 'var(--warning)', marginBottom: '0.5rem' }}>Seumur Hidup</div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>{appConfig.Price_Lifetime}</div>
-              </div>
-            )}
-          </div>
-
-          {(appConfig.Promo_FreeTest === 'true' || appConfig.Promo_FreeTest === true || appConfig.Promo_FreeTest === undefined) && (
-            <div style={{ marginTop: '2rem' }}>
-              <button
-                className="btn btn-primary"
-                style={{ width: '100%', maxWidth: '300px', fontSize: '1.1rem', padding: '0.75rem', background: 'var(--primary)', borderColor: 'var(--primary)' }}
-                onClick={handleFreeTrial}
-                disabled={loading}
-              >
-                {loading ? 'Memproses...' : 'Coba Gratis 5 Hari'}
-              </button>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                *Masukkan email Anda di kotak atas lalu klik tombol ini untuk langsung mencoba!
-              </p>
+  if (isLogin) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '2rem 1rem', gap: '2rem' }}>
+        <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
+          <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Masuk</h2>
+          {message && (
+            <div style={{ padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', background: message.type === 'error' ? 'var(--danger-bg)' : 'var(--success-bg)', color: message.type === 'error' ? 'var(--danger)' : 'var(--success)' }}>
+              {message.text}
             </div>
           )}
+          <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Email</label>
+              <input type="email" className="form-control" value={email} onChange={e => setEmail(e.target.value)} required placeholder="Budi@gmail.com" />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? 'Memproses...' : 'Masuk'}
+            </button>
+          </form>
+          <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+            Belum punya akun? <span style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => { setIsLogin(false); setMessage(null); }}>Daftar di sini</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // REGISTER MODE (2-COLUMN CHECKOUT)
+  return (
+    <div style={{ padding: '2rem 1rem', maxWidth: '1000px', margin: '0 auto', width: '100%' }}>
+      <h2 style={{ textAlign: 'center', marginBottom: '0.5rem' }}>Pilih Paket Langganan</h2>
+      <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '2rem' }}>
+        Sudah punya akun? <span style={{ color: 'var(--primary)', cursor: 'pointer', fontWeight: 'bold' }} onClick={() => { setIsLogin(true); setMessage(null); setShowPayment(false); setSelectedPackage(null); }}>Masuk di sini</span>
+      </p>
+
+      {message && (
+        <div style={{ padding: '1rem', borderRadius: '8px', marginBottom: '2rem', background: message.type === 'error' ? 'var(--danger-bg)' : 'var(--success-bg)', color: message.type === 'error' ? 'var(--danger)' : 'var(--success)' }}>
+          {message.text}
         </div>
       )}
 
-      {/* Payment Modal for New Subscription */}
-      {selectedPackage && (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', alignItems: 'start' }}>
+        {/* LEFT COLUMN: PACKAGES */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {appConfig && appConfig.Price_1Year && (
+            <div onClick={() => handlePackageClick('1 Tahun')} style={{ padding: '1.5rem', border: selectedPackage === '1 Tahun' ? '2px solid var(--primary)' : '1px solid var(--glass-border)', borderRadius: '12px', background: selectedPackage === '1 Tahun' ? 'rgba(99, 102, 241, 0.1)' : 'var(--glass-bg)', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div style={{ fontWeight: 'bold', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Paket 1 Tahun</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--primary)' }}>{appConfig.Price_1Year}</div>
+            </div>
+          )}
+          {appConfig && appConfig.Price_Bundle && (
+            <div onClick={() => handlePackageClick('Bundling (2 Tahun)')} style={{ padding: '1.5rem', border: selectedPackage === 'Bundling (2 Tahun)' ? '2px solid var(--success)' : '1px solid var(--glass-border)', borderRadius: '12px', background: selectedPackage === 'Bundling (2 Tahun)' ? 'var(--success-bg)' : 'var(--glass-bg)', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div style={{ fontWeight: 'bold', color: 'var(--success)', marginBottom: '0.5rem' }}>Paket Bundling (2 Tahun)</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--success)' }}>{appConfig.Price_Bundle}</div>
+            </div>
+          )}
+          {appConfig && appConfig.Price_Lifetime && (
+            <div onClick={() => handlePackageClick('Seumur Hidup')} style={{ padding: '1.5rem', border: selectedPackage === 'Seumur Hidup' ? '2px solid var(--warning)' : '1px solid var(--glass-border)', borderRadius: '12px', background: selectedPackage === 'Seumur Hidup' ? 'rgba(245, 158, 11, 0.15)' : 'var(--glass-bg)', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div style={{ fontWeight: 'bold', color: 'var(--warning)', marginBottom: '0.5rem' }}>Paket Seumur Hidup</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--warning)' }}>{appConfig.Price_Lifetime}</div>
+            </div>
+          )}
+          {appConfig && (appConfig.Promo_FreeTest === 'true' || appConfig.Promo_FreeTest === true || appConfig.Promo_FreeTest === undefined) && (
+            <div onClick={() => handlePackageClick('Coba Gratis 5 Hari')} style={{ padding: '1.5rem', border: selectedPackage === 'Coba Gratis 5 Hari' ? '2px solid #8b5cf6' : '1px solid var(--glass-border)', borderRadius: '12px', background: selectedPackage === 'Coba Gratis 5 Hari' ? 'rgba(139, 92, 246, 0.1)' : 'var(--glass-bg)', cursor: 'pointer', transition: 'all 0.2s' }}>
+              <div style={{ fontWeight: 'bold', color: '#8b5cf6', marginBottom: '0.5rem' }}>Trial</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#8b5cf6' }}>Coba Gratis 5 Hari</div>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN: ORDER DETAILS */}
+        <div className="card" style={{ position: 'sticky', top: '100px' }}>
+          <h3 style={{ marginBottom: '1.5rem', borderBottom: '1px solid var(--glass-border)', paddingBottom: '1rem' }}>Rincian Pesanan</h3>
+          
+          {!selectedPackage ? (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+              <p>Silakan klik salah satu paket di sebelah kiri untuk melihat rincian dan melanjutkan pendaftaran.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleCheckoutSubmit}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Paket Terpilih</span>
+                <span style={{ fontWeight: 'bold' }}>{selectedPackage}</span>
+              </div>
+              
+              {selectedPackage !== 'Coba Gratis 5 Hari' && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Harga Dasar</span>
+                    <span>Rp {basePrice.toLocaleString('id-ID')}</span>
+                  </div>
+                  {adminFee > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>Biaya Admin</span>
+                      <span>Rp {adminFee.toLocaleString('id-ID')}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Kode Unik</span>
+                    <span>Rp {automationFee.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', paddingTop: '1rem', borderTop: '1px dashed var(--glass-border)' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>Total Tagihan</span>
+                    <span style={{ fontWeight: 'bold', fontSize: '1.2rem', color: 'var(--primary)' }}>Rp {totalPrice.toLocaleString('id-ID')}</span>
+                  </div>
+                </>
+              )}
+
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Email Pendaftaran</label>
+                <input type="email" className="form-control" value={email} onChange={e => setEmail(e.target.value)} required placeholder="Budi@gmail.com" />
+              </div>
+
+              {selectedPackage !== 'Coba Gratis 5 Hari' && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>No Handphone (WhatsApp)</label>
+                  <input type="tel" className="form-control" value={phone} onChange={e => setPhone(e.target.value)} required placeholder="08123456789" />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '2rem' }}>
+                <input type="checkbox" id="agree" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: '0.25rem', width: '18px', height: '18px' }} />
+                <label htmlFor="agree" style={{ fontSize: '0.9rem', color: 'var(--text-muted)', cursor: 'pointer', lineHeight: '1.4' }}>
+                  Saya setuju dengan syarat dan ketentuan layanan FamilyFin, dan mengonfirmasi bahwa data yang saya masukkan adalah benar.
+                </label>
+              </div>
+
+              <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem', fontSize: '1.1rem' }} disabled={loading}>
+                {loading ? 'Memproses...' : (selectedPackage === 'Coba Gratis 5 Hari' ? 'Daftar Sekarang' : 'Lanjutkan Pembayaran')}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+
+      {showPayment && selectedPackage !== 'Coba Gratis 5 Hari' && (
         <PaymentModal 
           pkgName={selectedPackage} 
           appConfig={appConfig} 
-          currentUser={{ email: email }} 
-          onClose={() => setSelectedPackage(null)} 
+          currentUser={{ email, phone }} 
+          precalcAutomationFee={automationFee}
+          onClose={() => setShowPayment(false)} 
         />
       )}
     </div>
@@ -1059,26 +1185,30 @@ function App() {
       {/* Bottom Navigation (Mobile Only) */}
       {currentUser && (
         <nav className="bottom-nav">
-          <div className={`bottom-nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-            <Home size={22} />
-            <span>Beranda</span>
-          </div>
-          <div className={`bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-            <LayoutDashboard size={22} />
-            <span>Statistik</span>
-          </div>
+          {currentUser.spreadsheetId && (
+            <>
+              <div className={`bottom-nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
+                <Home size={22} />
+                <span>Beranda</span>
+              </div>
+              <div className={`bottom-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                <LayoutDashboard size={22} />
+                <span>Statistik</span>
+              </div>
 
-          {/* Center Add Button */}
-          <div className="bottom-nav-item" onClick={() => setActiveTab('transactions')}>
-            <div className="bottom-nav-add">
-              <Plus size={24} />
-            </div>
-          </div>
+              {/* Center Add Button */}
+              <div className="bottom-nav-item" onClick={() => setActiveTab('transactions')}>
+                <div className="bottom-nav-add">
+                  <Plus size={24} />
+                </div>
+              </div>
 
-          <div className={`bottom-nav-item ${activeTab === 'debts' ? 'active' : ''}`} onClick={() => setActiveTab('debts')}>
-            <Receipt size={22} />
-            <span>Hutang</span>
-          </div>
+              <div className={`bottom-nav-item ${activeTab === 'debts' ? 'active' : ''}`} onClick={() => setActiveTab('debts')}>
+                <Receipt size={22} />
+                <span>Hutang</span>
+              </div>
+            </>
+          )}
 
           {currentUser.role === 'admin' && (
             <div className={`bottom-nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
@@ -1087,10 +1217,12 @@ function App() {
             </div>
           )}
 
-          <div className={`bottom-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-            <User size={22} />
-            <span>Pengaturan</span>
-          </div>
+          {currentUser.spreadsheetId && (
+            <div className={`bottom-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+              <User size={22} />
+              <span>Pengaturan</span>
+            </div>
+          )}
         </nav>
       )}
 
@@ -2088,9 +2220,9 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
   );
 }
 
-function PaymentModal({ pkgName, appConfig, currentUser, onClose }) {
+function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomationFee }) {
   const [invoiceNumber] = useState(Math.floor(Math.random() * 9000000) + 1000000);
-  const [automationFee] = useState(Math.floor(Math.random() * 900) + 100);
+  const [automationFee] = useState(precalcAutomationFee || Math.floor(Math.random() * 900) + 100);
   const [showSummary, setShowSummary] = useState(true);
 
   const parsePrice = (priceStr) => {
@@ -2118,10 +2250,10 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose }) {
       alert("Nomor WhatsApp Admin belum diatur.");
       return;
     }
-    const email = currentUser?.email ? `(${currentUser.email})` : '';
-    const text = encodeURIComponent(`Halo Admin, saya ingin berlangganan/memperpanjang akun saya ${email} dengan paket ${pkgName}.\n\n*Invoice:* ${invoiceNumber}\n*Total Transfer:* Rp ${totalPrice.toLocaleString('id-ID')}\n\nSaya telah melakukan pembayaran.`);
+    const email = currentUser?.email ? `Email: ${currentUser.email}` : '';
+    const phone = currentUser?.phone ? `No HP: ${currentUser.phone}` : '';
+    const text = encodeURIComponent(`Halo Admin, saya ingin mendaftar/memperpanjang langganan dengan paket ${pkgName}.\n\n*Data Pendaftar:*\n${email}\n${phone}\n\n*Invoice:* ${invoiceNumber}\n*Total Transfer:* Rp ${totalPrice.toLocaleString('id-ID')}\n\nSaya telah melakukan pembayaran.`);
     window.open(`https://wa.me/${waNumber}?text=${text}`, '_blank');
-    onClose();
   };
 
   const getQrisImgSrc = (url) => {

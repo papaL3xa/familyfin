@@ -11,12 +11,12 @@ function getSpreadsheetId() {
 
 // --- Auth & Admin API ---
 
-export async function registerUser(email) {
+export async function registerUser(email, phone, pkgName) {
   const url = getApiUrl();
   if (!url) throw new Error("API URL not set");
   const response = await fetch(url, {
     method: 'POST',
-    body: JSON.stringify({ action: 'registerUser', payload: { email } })
+    body: JSON.stringify({ action: 'registerUser', payload: { email, phone, package: pkgName } })
   });
   return await response.json();
 }
