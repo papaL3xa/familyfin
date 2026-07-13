@@ -1568,10 +1568,10 @@ function App() {
                 <Heart size={16} color="#ef4444" /> <span>Dukung Dev</span>
               </button>
               <button className="btn btn-outline header-btn" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.querySelector('input[type="email"]')?.focus(); }}>
-                <LogIn size={16} /> <span className="btn-text">Masuk</span>
+                <LogIn size={18} color="#6366f1" /> <span className="btn-text">Masuk</span>
               </button>
               <button className="btn btn-primary header-btn" style={{ background: '#1e293b', border: 'none', color: '#fff' }} onClick={() => showCustomAlert("Panduan Install WebApp (PWA):\n\n🍏 iOS (Safari):\n1. Tap icon Share (Bagikan) di bawah layar\n2. Scroll ke bawah, pilih 'Add to Home Screen'\n\n🤖 Android (Chrome):\n1. Tap menu titik tiga di pojok kanan atas\n2. Pilih 'Install app' atau 'Add to Home screen'")}>
-                <Download size={16} /> <span className="btn-text">App (PWA)</span>
+                <Download size={18} color="#a3e635" /> <span className="btn-text">App (PWA)</span>
               </button>
               <div className="theme-switch-header" onClick={toggleTheme}>
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}

@@ -618,13 +618,21 @@ h1, h2, h3, h4, h5, h6 {
   .btn-support {
     display: none;
   }
+  .header-btn .btn-text {
+    display: none;
+  }
   .header-btn {
-    padding: 0.35rem 0.6rem;
-    font-size: 0.8rem;
+    padding: 0 !important;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid var(--glass-border) !important;
+    backdrop-filter: blur(8px);
   }
   .header-btn svg {
-    width: 14px;
-    height: 14px;
+    margin: 0 !important;
   }
 }
 
