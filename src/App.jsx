@@ -2052,7 +2052,10 @@ function ReceiptModal({ transaction, onClose }) {
         
         <div className="receipt-container" style={{ padding: '1.5rem', background: '#fff', border: '1px dashed #ccc', borderRadius: '8px', marginBottom: '1.5rem', color: '#1A1A1A' }}>
           <div style={{ textAlign: 'center', marginBottom: '1rem', borderBottom: '2px dashed #eee', paddingBottom: '1rem' }}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>FamilyFin</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <Wallet size={24} color="#000" />
+              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', color: '#000' }}>FamilyFin</h2>
+            </div>
             <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>BUKTI TRANSAKSI</p>
           </div>
           
@@ -2085,9 +2088,12 @@ function ReceiptModal({ transaction, onClose }) {
             )}
           </div>
           
-          <div style={{ borderTop: '2px dashed #eee', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ borderTop: '2px dashed #eee', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <span style={{ fontWeight: 'bold' }}>Total:</span>
             <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Rp {parseInt(transaction.amount).toLocaleString('id-ID')}</span>
+          </div>
+          <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '1.5rem' }}>
+            {localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.'}
           </div>
         </div>
 
@@ -2102,7 +2108,10 @@ function ReceiptModal({ transaction, onClose }) {
       <div id="print-root" style={{ display: 'none' }}>
         <div style={{ padding: '2rem', color: 'black', fontFamily: 'monospace', maxWidth: '80mm', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '1rem', borderBottom: '1px dashed black', paddingBottom: '1rem' }}>
-            <h2 style={{ margin: 0, fontSize: '24px' }}>FamilyFin</h2>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+              <Wallet size={24} color="#000" />
+              <h2 style={{ margin: 0, fontSize: '24px', color: '#000' }}>FamilyFin</h2>
+            </div>
             <p style={{ margin: 0, fontSize: '14px' }}>BUKTI TRANSAKSI</p>
           </div>
           
@@ -2120,7 +2129,7 @@ function ReceiptModal({ transaction, onClose }) {
           </div>
           
           <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '12px' }}>
-            Terima kasih telah menggunakan FamilyFin.
+            {localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.'}
           </div>
         </div>
         </div>
@@ -2510,7 +2519,10 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
             
             <div className="receipt-container" style={{ padding: '1.5rem', background: '#fff', border: '1px dashed #ccc', borderRadius: '8px', marginBottom: '1.5rem', color: '#1A1A1A' }}>
               <div style={{ textAlign: 'center', marginBottom: '1rem', borderBottom: '2px dashed #eee', paddingBottom: '1rem' }}>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>FamilyFin</h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <Wallet size={24} color="#000" />
+                  <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', color: '#000' }}>FamilyFin</h2>
+                </div>
                 <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>BUKTI MUTASI</p>
               </div>
               
@@ -2537,16 +2549,22 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
                 </div>
               </div>
               
-              <div style={{ borderTop: '2px dashed #eee', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ borderTop: '2px dashed #eee', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                 <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Jumlah:</span>
                 <span style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>Rp {Number(receiptData.amount).toLocaleString('id-ID')}</span>
+              </div>
+              <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '1.5rem' }}>
+                {localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.'}
               </div>
             </div>
 
             {/* The Print Area (Hidden from screen) */}
             <div id="mutasi-print-root" style={{ display: 'none' }}>
               <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>FamilyFin</h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <Wallet size={24} color="#000" />
+                  <h2 style={{ margin: 0, fontSize: '1.2rem', textTransform: 'uppercase', color: '#000' }}>FamilyFin</h2>
+                </div>
                 <div style={{ fontSize: '0.8rem' }}>Tanda Terima Mutasi</div>
               </div>
               
@@ -2581,7 +2599,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
               
               <div style={{ borderBottom: '1px dashed #000', margin: '0.5rem 0' }}></div>
               <div style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '1rem' }}>
-                Terima kasih
+                {localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.'}
               </div>
             </div>
 
@@ -3520,6 +3538,7 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [openAccordion, setOpenAccordion] = useState(null); // 'wallets' or 'categories'
+  const [printFooterText, setPrintFooterText] = useState(() => localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.');
 
   const handleExtend = (pkgName) => {
     setSelectedPackage(pkgName);
@@ -3602,6 +3621,43 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
           {openAccordion === 'categories' && (
             <div style={{ padding: '1rem', background: 'rgba(255,255,255,0.3)', borderTop: '1px solid var(--glass-border)' }}>
               <CategoriesTab categories={categories} onRefresh={loadData} isLoading={isLoading} />
+            </div>
+          )}
+        </div>
+
+        {/* Accordion Pengaturan Cetak */}
+        <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div
+            style={{ padding: '1rem 1.5rem', background: 'var(--glass-bg)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold' }}
+            onClick={() => setOpenAccordion(openAccordion === 'print' ? null : 'print')}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Printer size={20} color="var(--primary)" /> Pengaturan Cetak
+            </div>
+            <span>{openAccordion === 'print' ? '▲' : '▼'}</span>
+          </div>
+          {openAccordion === 'print' && (
+            <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.3)', borderTop: '1px solid var(--glass-border)' }}>
+              <div className="form-group">
+                <label>Teks Footer / Penutup Struk</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={printFooterText} 
+                  onChange={(e) => setPrintFooterText(e.target.value)} 
+                  placeholder="Terima kasih telah berbelanja..." 
+                />
+              </div>
+              <button 
+                className="btn btn-primary" 
+                style={{ width: '100%', marginTop: '0.5rem' }} 
+                onClick={() => {
+                  localStorage.setItem('printFooter', printFooterText);
+                  alert("Pengaturan cetak berhasil disimpan!");
+                }}
+              >
+                Simpan Pengaturan Cetak
+              </button>
             </div>
           )}
         </div>
