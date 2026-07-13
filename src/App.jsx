@@ -1985,7 +1985,10 @@ function generateSerialNumber(transaction) {
   else if (type === 'Transfer' || type === 'Mutasi') prefix = 'MUT';
   else if (type === 'Debt' || type === 'Hutang') prefix = 'HUT';
   
-  return `${prefix}-${transaction.id}`;
+  const idNumbers = String(transaction.id).replace(/\D/g, '');
+  const shortId = idNumbers.length > 5 ? idNumbers.slice(-5) : idNumbers.padStart(5, '0');
+  
+  return `${prefix}-${shortId}`;
 }
 
 const handleIframePrint = (elementId) => {
@@ -2043,8 +2046,8 @@ function ReceiptModal({ transaction, onClose }) {
   
   return (
     <>
-      <div className="modal-overlay no-print" style={{ zIndex: 9999 }}>
-        <div className="modal-content" style={{ maxWidth: '400px', width: '90%' }}>
+      <div className="no-print" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+        <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
         <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Cetak Bukti Transaksi</h3>
         
         <div className="receipt-container" style={{ padding: '1.5rem', background: '#fff', border: '1px dashed #ccc', borderRadius: '8px', marginBottom: '1.5rem', color: '#1A1A1A' }}>
@@ -2096,7 +2099,7 @@ function ReceiptModal({ transaction, onClose }) {
         </div>
       </div>
       
-      <div id="print-root" className="print-only">
+      <div id="print-root" style={{ display: 'none' }}>
         <div style={{ padding: '2rem', color: 'black', fontFamily: 'monospace', maxWidth: '80mm', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '1rem', borderBottom: '1px dashed black', paddingBottom: '1rem' }}>
             <h2 style={{ margin: 0, fontSize: '24px' }}>FamilyFin</h2>
@@ -2161,7 +2164,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
           return;
         }
 
-        const trxId = 'MUT-' + Date.now().toString().slice(-6);
+        const trxId = 'MUT-' + Date.now().toString().slice(-5);
         const fullNote = note ? `[${trxId}] ${note}` : `[${trxId}] Mutasi`;
 
         await addTransaction({ date, type: 'Expense', amount, category: 'Mutasi Keluar', wallet: fromWallet, note: `${fullNote} ke ${toWallet}` });
@@ -2501,10 +2504,47 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
       )}
       {receiptData && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }} className="receipt-overlay">
-          <div className="card receipt-card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
             
-            {/* The Print Area */}
-            <div id="mutasi-print-root" className="receipt-print-area" style={{ fontFamily: 'monospace', color: '#000', marginBottom: '1.5rem', border: '1px dashed #ccc', padding: '1rem', background: '#fff' }}>
+            <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Cetak Bukti Mutasi</h3>
+            
+            <div className="receipt-container" style={{ padding: '1.5rem', background: '#fff', border: '1px dashed #ccc', borderRadius: '8px', marginBottom: '1.5rem', color: '#1A1A1A' }}>
+              <div style={{ textAlign: 'center', marginBottom: '1rem', borderBottom: '2px dashed #eee', paddingBottom: '1rem' }}>
+                <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>FamilyFin</h2>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#666' }}>BUKTI MUTASI</p>
+              </div>
+              
+              <div style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#666' }}>ID:</span>
+                  <span style={{ fontWeight: 'bold' }}>{receiptData.trxId}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#666' }}>Tanggal:</span>
+                  <span>{receiptData.date}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#666' }}>Dari Dompet:</span>
+                  <span>{receiptData.fromWallet}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#666' }}>Ke Dompet:</span>
+                  <span>{receiptData.toWallet}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                  <span style={{ color: '#666' }}>Keterangan:</span>
+                  <span style={{ textAlign: 'right', maxWidth: '60%' }}>{receiptData.note}</span>
+                </div>
+              </div>
+              
+              <div style={{ borderTop: '2px dashed #eee', paddingTop: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Jumlah:</span>
+                <span style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>Rp {Number(receiptData.amount).toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+
+            {/* The Print Area (Hidden from screen) */}
+            <div id="mutasi-print-root" style={{ display: 'none' }}>
               <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
                 <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>FamilyFin</h2>
                 <div style={{ fontSize: '0.8rem' }}>Tanda Terima Mutasi</div>
