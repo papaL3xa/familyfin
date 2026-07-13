@@ -919,45 +919,56 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
       </div>
       
       <div className="landing-split">
-        {/* Left Side: Copywriting */}
+        {/* Left Side: Promotional Copywriting */}
         <div className="animate-fade-up">
-          <div style={{ display: 'inline-block', padding: '0.4rem 1rem', background: 'linear-gradient(to right, #f59e0b, #ef4444)', color: '#fff', borderRadius: '100px', fontWeight: 'bold', fontSize: '0.85rem', marginBottom: '1.5rem', letterSpacing: '1px', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)' }}>
-            🔥 PROMO TERBATAS HARI INI
+          <div style={{ display: 'inline-block', padding: '0.5rem 1.25rem', background: 'rgba(99, 102, 241, 0.15)', border: '1px solid rgba(99, 102, 241, 0.3)', borderRadius: '100px', color: 'var(--primary)', fontWeight: '600', fontSize: '0.85rem', marginBottom: '1.5rem', letterSpacing: '0.5px' }}>
+            🚀 #1 Aplikasi Keuangan Keluarga Indonesia
           </div>
-          <h1 className="hero-title" style={{ fontSize: '3.5rem', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
-            Wujudkan <br/> Keuangan Keluarga <br/> Lebih Sehat
-          </h1>
-          <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '2.5rem', lineHeight: '1.6' }}>
-            Jangan biarkan uang bocor tanpa jejak. Catat pengeluaran, pantau hutang, dan capai target finansial Anda dengan otomatisasi pintar langsung ke Google Sheets!
+          <h1 className="hero-title">Kelola Keuangan Keluarga Lebih Cerdas & Terkontrol</h1>
+          <p style={{ fontSize: '1.15rem', color: 'var(--text-muted)', marginBottom: '2rem', lineHeight: '1.7' }}>
+            Catat pemasukan, pengeluaran, mutasi antar dompet, dan hutang-piutang keluarga Anda — semua <strong style={{ color: 'var(--text-main)' }}>otomatis tersimpan ke Google Sheets</strong> pribadi Anda. Aman, transparan, dan bisa diakses kapan saja.
           </p>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="feature-pill animate-fade-up delay-100" style={{ padding: '1.25rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-              <div style={{ padding: '0.75rem', background: 'var(--success)', borderRadius: '50%', color: '#fff', boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2.5rem' }}>
+            <div className="feature-pill animate-fade-up delay-100">
+              <div style={{ padding: '0.75rem', background: 'var(--success-bg)', borderRadius: '50%', color: 'var(--success)' }}>
                 <CheckCircle2 size={24} />
               </div>
               <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Pencatatan Super Cepat</div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Hanya butuh 3 detik untuk mencatat.</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: '600' }}>Pencatatan Cepat & Akurat</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Input transaksi hanya dalam hitungan detik</div>
               </div>
             </div>
-            <div className="feature-pill animate-fade-up delay-200" style={{ padding: '1.25rem', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
-              <div style={{ padding: '0.75rem', background: 'var(--primary)', borderRadius: '50%', color: '#fff', boxShadow: '0 0 15px rgba(99, 102, 241, 0.5)' }}>
+            <div className="feature-pill animate-fade-up delay-200">
+              <div style={{ padding: '0.75rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: '50%', color: 'var(--primary)' }}>
                 <Zap size={24} />
               </div>
               <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Otomatisasi Google Sheets</div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Database milik Anda sendiri 100%.</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: '600' }}>Sinkronisasi Google Sheets</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Data langsung masuk ke spreadsheet pribadi Anda</div>
               </div>
             </div>
-            <div className="feature-pill animate-fade-up delay-300" style={{ padding: '1.25rem', border: '1px solid rgba(244, 63, 94, 0.3)' }}>
-              <div style={{ padding: '0.75rem', background: 'var(--danger)', borderRadius: '50%', color: '#fff', boxShadow: '0 0 15px rgba(244, 63, 94, 0.5)' }}>
+            <div className="feature-pill animate-fade-up delay-300">
+              <div style={{ padding: '0.75rem', background: 'var(--danger-bg)', borderRadius: '50%', color: 'var(--danger)' }}>
                 <Shield size={24} />
               </div>
               <div>
-                <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Privasi Bank-Grade</div>
-                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Tidak ada data yang kami simpan.</div>
+                <div style={{ fontSize: '1.05rem', fontWeight: '600' }}>100% Aman & Transparan</div>
+                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Data hanya di akun Google Anda, bukan di server kami</div>
               </div>
+            </div>
+          </div>
+
+          {/* Social Proof */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem 1.5rem', background: 'var(--glass-bg)', border: '1px solid var(--glass-border)', borderRadius: '16px', backdropFilter: 'var(--glass-blur)' }} className="animate-fade-up delay-300">
+            <div style={{ display: 'flex' }}>
+              {['😊','🤩','🥳'].map((e, i) => (
+                <div key={i} style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(99,102,241,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', marginLeft: i > 0 ? '-8px' : '0', border: '2px solid var(--glass-border)' }}>{e}</div>
+              ))}
+            </div>
+            <div>
+              <div style={{ fontWeight: '600', fontSize: '0.95rem' }}>Dipercaya oleh banyak keluarga</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Ribuan transaksi tercatat setiap bulan</div>
             </div>
           </div>
         </div>
@@ -1029,7 +1040,7 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
                   )}
                   {appConfig && appConfig.Price_Lifetime && (
                     <div onClick={() => handlePackageClick('Seumur Hidup')} style={{ padding: '1rem', border: selectedPackage === 'Seumur Hidup' ? '2px solid var(--warning)' : '1px solid var(--glass-border)', borderRadius: '12px', background: selectedPackage === 'Seumur Hidup' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.05)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-                      <div style={{ position: 'absolute', top: 0, right: 0, background: 'var(--warning)', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', padding: '0.2rem 0.5rem', borderBottomLeftRadius: '8px' }}>BEST DEAL</div>
+                      <div style={{ position: 'absolute', top: '0', right: '0', background: 'var(--warning)', color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', padding: '0.15rem 0.6rem', borderRadius: '0 12px 0 8px' }}>BEST VALUE</div>
                       <div style={{ fontWeight: 'bold', color: 'var(--warning)' }}>Seumur Hidup</div>
                       <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--warning)' }}>{appConfig.Price_Lifetime}</div>
                     </div>
