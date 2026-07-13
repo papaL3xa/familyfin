@@ -1622,6 +1622,19 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
 
   const filteredCategories = categories.filter(c => c.type === txType);
 
+  const getWalletBalance = (walletName) => {
+    let balance = 0;
+    if (transactions && transactions.length > 0) {
+      transactions.forEach(t => {
+        if (t.wallet === walletName) {
+          if (t.type === 'Income') balance += Number(t.amount || 0);
+          else if (t.type === 'Expense') balance -= Number(t.amount || 0);
+        }
+      });
+    }
+    return balance;
+  };
+
   const txCategoryOptions = [
     { label: 'Pilih Kategori...', value: '' },
     ...filteredCategories.map(c => ({ label: c.name, value: c.name }))
@@ -1629,7 +1642,10 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
 
   const txWalletOptions = [
     { label: 'Pilih Dompet...', value: '' },
-    ...wallets.map(w => ({ label: w.name, value: w.name }))
+    ...wallets.map(w => {
+      const bal = getWalletBalance(w.name);
+      return { label: `${w.name} (Rp ${bal.toLocaleString('id-ID')})`, value: w.name };
+    })
   ];
 
   // Apply filters
