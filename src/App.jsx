@@ -1564,8 +1564,8 @@ function App() {
             </div>
           ) : (
             <div className="header-actions">
-              <button className="btn-support" onClick={() => { document.getElementById('support-section')?.scrollIntoView({ behavior: 'smooth' }); }}>
-                <Heart size={16} color="#ef4444" /> <span>Dukung Dev</span>
+              <button className="btn btn-outline header-btn btn-support" onClick={() => { document.getElementById('support-section')?.scrollIntoView({ behavior: 'smooth' }); }}>
+                <Heart size={18} color="#ef4444" /> <span className="btn-text">Dukung Dev</span>
               </button>
               <button className="btn btn-outline header-btn" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.querySelector('input[type="email"]')?.focus(); }}>
                 <LogIn size={18} color="#6366f1" /> <span className="btn-text">Masuk</span>

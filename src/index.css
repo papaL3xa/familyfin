@@ -553,8 +553,6 @@ h1, h2, h3, h4, h5, h6 {
   gap: 1rem;
 }
 .btn-support {
-  background: transparent;
-  border: none;
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -562,10 +560,11 @@ h1, h2, h3, h4, h5, h6 {
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
-  transition: color 0.2s;
+  transition: all 0.2s;
 }
 .btn-support:hover {
   color: var(--primary);
+  transform: translateY(-2px);
 }
 .header-btn {
   padding: 0.5rem 1rem;
@@ -615,13 +614,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media (max-width: 600px) { /* Mobile */
-  .btn-support {
+  .header-btn .btn-text, .btn-support span {
     display: none;
   }
-  .header-btn .btn-text {
-    display: none;
-  }
-  .header-btn {
+  .header-btn, .btn-support {
     padding: 0 !important;
     width: 38px !important;
     height: 38px !important;
@@ -631,7 +627,7 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid var(--glass-border) !important;
     backdrop-filter: blur(8px);
   }
-  .header-btn svg {
+  .header-btn svg, .btn-support svg {
     margin: 0 !important;
   }
 }
