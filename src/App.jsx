@@ -606,6 +606,10 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Biaya Admin (Opsional)</label>
               <input type="number" className="form-control" value={promoConfig.Payment_AdminFee || ''} onChange={e => setPromoConfig({ ...promoConfig, Payment_AdminFee: e.target.value })} placeholder="Contoh: 2500" disabled={!editMode.payment} />
             </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Link Saweria (Support Developer)</label>
+              <input type="url" className="form-control" value={promoConfig.Support_Saweria || ''} onChange={e => setPromoConfig({ ...promoConfig, Support_Saweria: e.target.value })} placeholder="https://saweria.co/username" disabled={!editMode.payment} />
+            </div>
           </div>
           {editMode.payment && <button type="submit" className="btn btn-primary" disabled={loading}>Simpan Metode Pembayaran</button>}
         </form>
@@ -3364,7 +3368,7 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
                   </div>
                   
                   <a
-                    href="https://saweria.co/familyfin"
+                    href={appConfig?.Support_Saweria || 'https://saweria.co/familyfin'}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{ position: 'relative', zIndex: 1, display: 'block', textAlign: 'center', padding: '0.75rem', background: 'rgba(255,255,255,0.95)', color: '#ef4444', borderRadius: '12px', fontWeight: '700', fontSize: '0.95rem', textDecoration: 'none', transition: 'transform 0.2s' }}
