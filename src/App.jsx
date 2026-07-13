@@ -1153,8 +1153,8 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
                   <CreditCard size={18} color="#34d399" />
                 </div>
                 <div>
-                  <h4 style={{ color: '#f8fafc', margin: 0, fontSize: '0.95rem' }}>Transfer E-Money</h4>
-                  <p style={{ color: '#64748b', margin: 0, fontSize: '0.7rem' }}>DANA / ShopeePay / OVO</p>
+                  <h4 style={{ color: '#f8fafc', margin: 0, fontSize: '0.95rem' }}>Transfer Bank</h4>
+                  <p style={{ color: '#64748b', margin: 0, fontSize: '0.7rem' }}>{appConfig?.Payment_Mandiri ? 'Bank Mandiri' : 'Bank Transfer'}</p>
                 </div>
               </div>
               {appConfig?.Payment_Mandiri && (
@@ -1185,16 +1185,17 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
             {appConfig?.Payment_QRIS && (
               <div style={{ background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%' }}>
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/QRIS_logo.svg/1200px-QRIS_logo.svg.png" alt="QRIS Logo" style={{ height: '24px' }} />
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Receipt size={18} color="#818cf8" />
+                  </div>
                   <div>
                     <h4 style={{ color: '#f8fafc', margin: 0, fontSize: '0.95rem' }}>QRIS</h4>
-                    <p style={{ color: '#64748b', margin: 0, fontSize: '0.7rem' }}>CARTREFF</p>
+                    <p style={{ color: '#64748b', margin: 0, fontSize: '0.7rem' }}>Scan untuk donasi</p>
                   </div>
                 </div>
-                <div style={{ background: '#fff', borderRadius: '12px', padding: '0.5rem', width: '100%', maxWidth: '200px' }}>
+                <div style={{ background: '#fff', borderRadius: '12px', padding: '0.5rem', width: '100%', maxWidth: '180px' }}>
                   <img src={getQrisImgSrc(appConfig.Payment_QRIS)} alt="QRIS" style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
                 </div>
-                <p style={{ color: '#94a3b8', fontSize: '0.7rem', textAlign: 'center', margin: 0, fontWeight: '500' }}>CARTREFF • Scan untuk donasi</p>
               </div>
             )}
 
@@ -3403,8 +3404,10 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
                     <CreditCard size={20} color="#34d399" />
                   </div>
                   <div>
-                    <h3 style={{ color: '#f8fafc', margin: '0 0 0.25rem 0', fontSize: '1.1rem' }}>Transfer E-Money</h3>
-                    <p style={{ color: '#64748b', margin: 0, fontSize: '0.8rem' }}>DANA / ShopeePay / OVO</p>
+                    <h3 style={{ color: '#f8fafc', margin: '0 0 0.25rem 0', fontSize: '1.1rem' }}>Transfer Bank</h3>
+                    <p style={{ color: '#64748b', margin: 0, fontSize: '0.8rem' }}>
+                      {appConfig?.Payment_Mandiri ? 'Bank Mandiri' : 'Bank Transfer'}
+                    </p>
                   </div>
                   {appConfig?.Payment_Mandiri && (
                     <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -3455,10 +3458,12 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
                 {appConfig?.Payment_QRIS && (
                   <div style={{ background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
-                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/QRIS_logo.svg/1200px-QRIS_logo.svg.png" alt="QRIS Logo" style={{ height: '28px' }} />
+                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Receipt size={20} color="#818cf8" />
+                      </div>
                       <div>
                         <h3 style={{ color: '#f8fafc', margin: '0 0 0.15rem 0', fontSize: '1rem' }}>QRIS</h3>
-                        <p style={{ color: '#64748b', margin: 0, fontSize: '0.75rem' }}>CARTREFF</p>
+                        <p style={{ color: '#64748b', margin: 0, fontSize: '0.75rem' }}>Scan untuk donasi via e-wallet</p>
                       </div>
                     </div>
                     <div style={{ background: '#fff', borderRadius: '12px', padding: '0.75rem', width: '100%', maxWidth: '220px' }}>
@@ -3468,7 +3473,7 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
                         style={{ width: '100%', borderRadius: '8px', display: 'block' }} 
                       />
                     </div>
-                    <p style={{ color: '#94a3b8', fontSize: '0.75rem', textAlign: 'center', margin: 0, fontWeight: '500' }}>CARTREFF • Scan untuk donasi</p>
+                    <p style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center', margin: 0 }}>Scan QR di atas dengan aplikasi e-wallet favorit Anda</p>
                   </div>
                 )}
 
