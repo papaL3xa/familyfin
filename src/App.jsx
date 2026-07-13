@@ -2311,11 +2311,10 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
     setIsSubmitting(true);
     const form = e.target;
     const amount = Number(form.elements.amount.value);
+    const fee = Number(form.elements.fee.value || 0);
     const wallet = form.elements.wallet.value;
     const date = form.elements.date.value;
 
-    // Auto-create Category if not exists? For now we just use "Bayar Hutang"
-    // In code.gs it will just accept any category string
     const tx = {
       date: date,
       type: 'Expense',
@@ -2328,6 +2327,20 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
 
     try {
       await addTransaction(tx);
+      
+      if (fee > 0) {
+        const feeTx = {
+          date: date,
+          type: 'Expense',
+          amount: fee,
+          category: 'Biaya Admin',
+          wallet: wallet,
+          debt_id: payingDebt.id,
+          note: `Biaya pembayaran hutang: ${payingDebt.name}`
+        };
+        await addTransaction(feeTx);
+      }
+
       setPayingDebt(null);
       onRefresh();
     } catch (err) {
@@ -2456,6 +2469,15 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
                     Number(payingDebt.amount) - transactions.filter(t => t.debt_id === payingDebt.id && t.type === 'Expense').reduce((sum, t) => sum + Number(t.amount), 0)
                   } 
                   required 
+                  style={{ padding: '0.5rem' }} 
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>Biaya Admin / Lainnya (Rp) - Opsional</label>
+                <CurrencyInput 
+                  name="fee" 
+                  className="form-control" 
+                  defaultValue={0}
                   style={{ padding: '0.5rem' }} 
                 />
               </div>
