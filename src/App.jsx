@@ -1988,6 +1988,55 @@ function generateSerialNumber(transaction) {
   return `${prefix}-${transaction.id}`;
 }
 
+const handleIframePrint = (elementId) => {
+  const printElement = document.getElementById(elementId);
+  if (!printElement) return;
+
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.right = '0';
+  iframe.style.bottom = '0';
+  iframe.style.width = '0';
+  iframe.style.height = '0';
+  iframe.style.border = '0';
+  document.body.appendChild(iframe);
+
+  const content = printElement.innerHTML;
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <html>
+      <head>
+        <title>FamilyFin - Receipt</title>
+        <style>
+          @page { margin: 0; size: 58mm auto; }
+          body { 
+            font-family: monospace; 
+            margin: 0; 
+            padding: 0; 
+            width: 58mm; 
+            color: black;
+            font-size: 14px;
+          }
+          * { box-sizing: border-box; }
+        </style>
+      </head>
+      <body>
+        ${content}
+      </body>
+    </html>
+  `);
+  doc.close();
+
+  iframe.contentWindow.focus();
+  setTimeout(() => {
+    iframe.contentWindow.print();
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+  }, 250);
+};
+
 function ReceiptModal({ transaction, onClose }) {
   if (!transaction) return null;
   const serialNumber = generateSerialNumber(transaction);
@@ -2041,7 +2090,7 @@ function ReceiptModal({ transaction, onClose }) {
 
         <div className="modal-actions" style={{ display: 'flex', gap: '1rem' }}>
           <button className="btn btn-outline" onClick={onClose} style={{ flex: 1 }}>Tutup</button>
-          <button className="btn btn-primary" onClick={() => window.print()} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
+          <button className="btn btn-primary" onClick={() => handleIframePrint('print-root')} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
             <Printer size={18} /> Cetak
           </button>
         </div>
@@ -2455,7 +2504,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
           <div className="card receipt-card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             
             {/* The Print Area */}
-            <div className="receipt-print-area" style={{ fontFamily: 'monospace', color: '#000', marginBottom: '1.5rem', border: '1px dashed #ccc', padding: '1rem', background: '#fff' }}>
+            <div id="mutasi-print-root" className="receipt-print-area" style={{ fontFamily: 'monospace', color: '#000', marginBottom: '1.5rem', border: '1px dashed #ccc', padding: '1rem', background: '#fff' }}>
               <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
                 <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>FamilyFin</h2>
                 <div style={{ fontSize: '0.8rem' }}>Tanda Terima Mutasi</div>
@@ -2497,7 +2546,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem' }} className="no-print">
-              <button className="btn btn-primary" onClick={() => window.print()} style={{ flex: 1 }}>
+              <button className="btn btn-primary" onClick={() => handleIframePrint('mutasi-print-root')} style={{ flex: 1 }}>
                 Cetak Struk
               </button>
               <button className="btn btn-outline" onClick={() => setReceiptData(null)} style={{ flex: 1 }}>
