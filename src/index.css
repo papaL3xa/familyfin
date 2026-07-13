@@ -581,11 +581,18 @@ input[type="file"].form-control::file-selector-button:active {
 }
 
 @media print {
+  @page {
+    margin: 0;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+  }
   body * {
     visibility: hidden;
   }
   .receipt-overlay { background: transparent !important; backdrop-filter: none !important; }
-  .receipt-card { box-shadow: none !important; padding: 0 !important; }
+  .receipt-card { box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
   .receipt-print-area, .receipt-print-area * {
     visibility: visible;
   }
