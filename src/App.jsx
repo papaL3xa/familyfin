@@ -3489,11 +3489,8 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
             </div>
           )}
         </div>
-
-            </div>
-          )}
-        </div>
       </div>
+    </div>
 
       {/* Extend Modal */}
       {showExtendModal && !selectedPackage && (
