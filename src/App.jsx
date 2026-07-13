@@ -1536,31 +1536,36 @@ function App() {
           </div>
 
           {currentUser ? (
-            <div className="header-nav">
-              {currentUser.spreadsheetId && (
-                <>
-                  <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-                    <Home size={18} /> Beranda
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div className="header-nav">
+                {currentUser.spreadsheetId && (
+                  <>
+                    <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
+                      <Home size={18} /> Beranda
+                    </div>
+                    <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                      <LayoutDashboard size={18} /> Statistik
+                    </div>
+                    <div className={`nav-item ${activeTab === 'debts' ? 'active' : ''}`} onClick={() => setActiveTab('debts')}>
+                      <Receipt size={18} /> Hutang
+                    </div>
+                    <div className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}>
+                      <ArrowRightLeft size={18} /> Transaksi
+                    </div>
+                    <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+                      <Settings size={18} /> Pengaturan
+                    </div>
+                  </>
+                )}
+                {currentUser.role === 'admin' && (
+                  <div className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+                    <Shield size={18} /> Admin
                   </div>
-                  <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                    <LayoutDashboard size={18} /> Statistik
-                  </div>
-                  <div className={`nav-item ${activeTab === 'debts' ? 'active' : ''}`} onClick={() => setActiveTab('debts')}>
-                    <Receipt size={18} /> Hutang
-                  </div>
-                  <div className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}>
-                    <ArrowRightLeft size={18} /> Transaksi
-                  </div>
-                  <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-                    <Settings size={18} /> Pengaturan
-                  </div>
-                </>
-              )}
-              {currentUser.role === 'admin' && (
-                <div className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
-                  <Shield size={18} /> Admin
-                </div>
-              )}
+                )}
+              </div>
+              <div className="theme-switch-header" onClick={toggleTheme}>
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </div>
             </div>
           ) : (
             <div className="header-actions">
@@ -1988,8 +1993,9 @@ function ReceiptModal({ transaction, onClose }) {
   const serialNumber = generateSerialNumber(transaction);
   
   return (
-    <div className="modal-overlay no-print" style={{ zIndex: 9999 }}>
-      <div className="modal-content" style={{ maxWidth: '400px', width: '90%' }}>
+    <>
+      <div className="modal-overlay no-print" style={{ zIndex: 9999 }}>
+        <div className="modal-content" style={{ maxWidth: '400px', width: '90%' }}>
         <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Cetak Bukti Transaksi</h3>
         
         <div className="receipt-container" style={{ padding: '1.5rem', background: '#fff', border: '1px dashed #ccc', borderRadius: '8px', marginBottom: '1.5rem', color: '#1A1A1A' }}>
@@ -2065,8 +2071,9 @@ function ReceiptModal({ transaction, onClose }) {
             Terima kasih telah menggunakan FamilyFin.
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
