@@ -188,7 +188,7 @@ function GlassSelect({ value: propValue, onChange, options, style, name, require
           <div style={{ position: 'fixed', inset: 0, zIndex: 9 }} onClick={() => setIsOpen(false)} />
           <div style={{
             position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, zIndex: 10,
-            background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            background: 'var(--card-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
             border: '1px solid var(--glass-border)', borderRadius: '12px', padding: '0.5rem',
             boxShadow: '0 10px 25px rgba(0,0,0,0.1)', maxHeight: '300px', overflowY: 'auto'
           }}>
@@ -199,11 +199,11 @@ function GlassSelect({ value: propValue, onChange, options, style, name, require
                 style={{
                   padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer',
                   color: 'var(--text-main)',
-                  background: value === o.value ? 'rgba(0,0,0,0.05)' : 'transparent',
+                  background: value === o.value ? 'rgba(168, 85, 247, 0.15)' : 'transparent',
                   transition: 'background 0.2s'
                 }}
-                onMouseOver={e => e.target.style.background = 'rgba(168, 85, 247, 0.15)'}
-                onMouseOut={e => e.target.style.background = value === o.value ? 'rgba(0,0,0,0.05)' : 'transparent'}
+                onMouseOver={e => e.target.style.background = 'rgba(168, 85, 247, 0.25)'}
+                onMouseOut={e => e.target.style.background = value === o.value ? 'rgba(168, 85, 247, 0.15)' : 'transparent'}
               >
                 {o.label}
               </div>
