@@ -1516,7 +1516,7 @@ function App() {
     <div className="app-layout">
       <GlobalModal />
       {/* Top Header */}
-      <header className="top-header" style={!currentUser ? { position: 'sticky', top: 0, zIndex: 50, background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', borderBottom: '1px solid var(--glass-border)', padding: '1rem 2rem', display: 'flex', justifyContent: 'center' } : {}}>
+      <header className="top-header" style={!currentUser ? { justifyContent: 'center' } : {}}>
         <div style={!currentUser ? { maxWidth: '1200px', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } : { display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
           
           <div className={!currentUser ? '' : 'header-brand'} style={!currentUser ? { display: 'flex', alignItems: 'center', gap: '0.75rem' } : {}}>
