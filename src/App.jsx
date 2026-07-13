@@ -3387,9 +3387,6 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
                 Perpanjang
               </button>
             )}
-            <button className="btn btn-outline" style={{ width: '100%' }} onClick={handleBackup}>
-              Backup Data
-            </button>
           </div>
         </div>
         <button className="btn btn-outline" style={{ marginTop: '1.5rem' }} onClick={handleLogout}>Keluar (Logout)</button>
