@@ -2980,6 +2980,8 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
   const [payingDebt, setPayingDebt] = useState(null); // stores the debt object when paying
   const [managingDebt, setManagingDebt] = useState(null);
   const [filterStatus, setFilterStatus] = useState('Belum Lunas');
+  const [currentTxId, setCurrentTxId] = useState(null);
+  const [printingTransaction, setPrintingTransaction] = useState(null);
 
   const getWalletBalance = (walletName) => {
     let balance = 0;
@@ -3066,7 +3068,9 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
     const wallet = form.elements.wallet.value;
     const date = form.elements.date.value;
 
+    const txId = 'tx_' + currentTxId;
     const tx = {
+      id: txId,
       date: date,
       type: 'Expense',
       amount: amount,
@@ -3078,6 +3082,7 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
 
     try {
       await addTransaction(tx);
+      setPrintingTransaction(tx);
       
       if (fee > 0) {
         const feeTx = {
@@ -3203,7 +3208,7 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
                 </div>
 
                 {!d.isPaidOff && (
-                  <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setPayingDebt(d)}>
+                  <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => { setPayingDebt(d); setCurrentTxId(Date.now().toString().slice(-5)); }}>
                     Bayar Hutang Ini
                   </button>
                 )}
@@ -3217,7 +3222,14 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
       {payingDebt && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
           <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <h3 style={{ margin: '0 0 1rem 0' }}>Form Pembayaran</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>Form Pembayaran</h3>
+              {currentTxId && (
+                <div style={{ fontSize: '0.85rem', background: 'var(--glass-border)', padding: '0.25rem 0.75rem', borderRadius: '100px', fontWeight: 'bold' }}>
+                  ID: EXP-{currentTxId}
+                </div>
+              )}
+            </div>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Pelunasan: <strong>{payingDebt.name}</strong></p>
             <form onSubmit={handlePayDebt} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
@@ -3317,6 +3329,10 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
             </form>
           </div>
         </div>
+      )}
+
+      {printingTransaction && (
+        <ReceiptModal transaction={printingTransaction} onClose={() => setPrintingTransaction(null)} />
       )}
     </div>
   );
