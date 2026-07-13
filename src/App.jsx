@@ -37,6 +37,7 @@ import {
   fetchDebts,
   addDebt,
   deleteDebt,
+  updateDebt,
   registerUser,
   loginUser,
   approveUser,
@@ -2319,6 +2320,39 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
     }
   }
 
+  const handleUpdateDebt = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const form = e.target;
+    let baseName = form.elements.name.value;
+    const dueDate = form.elements.dueDate ? form.elements.dueDate.value : null;
+
+    if (dueDate) {
+      const d = new Date(dueDate);
+      if (!isNaN(d.getTime())) {
+        const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        // clean up existing Jatuh tempo if any
+        baseName = baseName.replace(/ - Jatuh tempo .*$/i, '');
+        baseName = `${baseName} - Jatuh tempo ${dateStr}`;
+      }
+    }
+
+    const debt = {
+      id: managingDebt.id,
+      name: baseName,
+      amount: form.elements.amount.value
+    };
+    try {
+      await updateDebt(debt);
+      setManagingDebt(null);
+      onRefresh();
+    } catch (err) {
+      alert("Gagal mengupdate hutang");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   const handlePayDebt = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -2540,30 +2574,43 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
           <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
             <h3 style={{ margin: '0 0 1rem 0' }}>Kelola Hutang</h3>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}><strong>{managingDebt.name}</strong></p>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Silakan ubah rincian di bawah ini.</p>
             
-            <div style={{ padding: '1rem', background: 'var(--glass-bg)', borderRadius: '8px', marginBottom: '1rem' }}>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                Pengubahan nama atau nominal hutang secara langsung belum tersedia. Untuk menghapus hutang ini, tekan tombol di bawah.
-              </p>
-            </div>
+            <form onSubmit={handleUpdateDebt} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Nama Tempat / Peminjam</label>
+                <input type="text" name="name" className="form-control" defaultValue={managingDebt.name} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Total Hutang (Rp)</label>
+                <CurrencyInput name="amount" className="form-control" defaultValue={managingDebt.amount} required />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Jatuh Tempo Baru (Opsional)</label>
+                <GlassDatePicker name="dueDate" style={{ width: '100%' }} />
+                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '0.25rem' }}>Kosongkan jika tidak ingin mengubah tanggal jatuh tempo.</small>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <button 
-                type="button" 
-                className="btn btn-primary" 
-                style={{ background: 'var(--danger)', borderColor: 'transparent', padding: '0.75rem', borderRadius: '8px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
-                onClick={() => {
-                  handleDeleteDebt(managingDebt.id);
-                  setManagingDebt(null);
-                }}
-              >
-                <Trash2 size={16} /> Hapus Hutang Ini
-              </button>
-              <button type="button" className="btn btn-outline" style={{ padding: '0.75rem', borderRadius: '8px' }} onClick={() => setManagingDebt(null)}>
-                Tutup
-              </button>
-            </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+                <button type="submit" className="btn btn-primary" style={{ padding: '0.75rem', borderRadius: '8px' }} disabled={isSubmitting}>
+                  {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-outline" 
+                  style={{ borderColor: 'var(--danger)', color: 'var(--danger)', padding: '0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
+                  onClick={() => {
+                    handleDeleteDebt(managingDebt.id);
+                    setManagingDebt(null);
+                  }}
+                >
+                  <Trash2 size={16} /> Hapus Hutang Ini
+                </button>
+                <button type="button" className="btn btn-outline" style={{ padding: '0.75rem', borderRadius: '8px' }} onClick={() => setManagingDebt(null)}>
+                  Batal
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

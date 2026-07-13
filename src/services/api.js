@@ -336,6 +336,17 @@ export async function addDebt(debt) {
   }
 }
 
+export async function updateDebt(debt) {
+  const url = getApiUrl();
+  const sid = getSpreadsheetId();
+  if (!url) throw new Error("API URL not set");
+  const response = await fetch(url, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'updateDebt', payload: debt, spreadsheetId: sid })
+  });
+  return await response.json();
+}
+
 export async function deleteDebt(id) {
   const url = getApiUrl();
   const sid = getSpreadsheetId();
