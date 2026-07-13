@@ -2450,6 +2450,9 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
                   <h4>{t.category}</h4>
                   <p style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
                     {formatDate(t.date)}
+                    <span style={{ display: 'inline-flex', background: 'var(--glass-border)', padding: '0.1rem 0.4rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      {generateSerialNumber(t)}
+                    </span>
                     {t.note ? `• ${t.note}` : ''}
                     {t.wallet && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', color: 'var(--primary)', fontWeight: 500 }}>
