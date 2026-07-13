@@ -2144,6 +2144,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
   const [editingTx, setEditingTx] = useState(null);
   const [printingTransaction, setPrintingTransaction] = useState(null);
   const [receiptData, setReceiptData] = useState(null);
+  const [currentTxId, setCurrentTxId] = useState(null);
 
   // Filter States
   const [filterType, setFilterType] = useState('All');
@@ -2173,7 +2174,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
           return;
         }
 
-        const trxId = 'MUT-' + Date.now().toString().slice(-5);
+        const trxId = 'MUT-' + currentTxId;
         const fullNote = note ? `[${trxId}] ${note}` : `[${trxId}] Mutasi`;
 
         await addTransaction({ date, type: 'Expense', amount, category: 'Mutasi Keluar', wallet: fromWallet, note: `${fullNote} ke ${toWallet}` });
@@ -2182,7 +2183,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
         setReceiptData({ trxId, date, fromWallet, toWallet, amount, note: note || 'Mutasi Dompet' });
         
       } else {
-        const txId = 'tx_' + Date.now();
+        const txId = 'tx_' + currentTxId;
         const tx = {
           id: txId,
           date: form.elements.date.value,
@@ -2317,17 +2318,24 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
   return (
     <div>
       <div className="card" style={{ position: 'relative', zIndex: 30 }}>
-        <h2 style={{ marginBottom: '1rem' }}>Transaksi Baru</h2>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h2 style={{ margin: 0 }}>Transaksi Baru</h2>
+          {txType && currentTxId && (
+            <div style={{ fontSize: '0.85rem', background: 'var(--glass-border)', padding: '0.25rem 0.75rem', borderRadius: '100px', fontWeight: 'bold' }}>
+              ID: {txType === 'Transfer' ? 'MUT' : txType === 'Income' ? 'INC' : 'EXP'}-{currentTxId}
+            </div>
+          )}
+        </div>
 
         {!txType ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
-            <button className="btn btn-primary" style={{ background: 'var(--success)', padding: '1rem' }} onClick={() => setTxType('Income')}>
+            <button className="btn btn-primary" style={{ background: 'var(--success)', padding: '1rem' }} onClick={() => { setTxType('Income'); setCurrentTxId(Date.now().toString().slice(-5)); }}>
               <Plus size={20} /> Pemasukan
             </button>
-            <button className="btn btn-primary" style={{ background: 'var(--danger)', padding: '1rem' }} onClick={() => setTxType('Expense')}>
+            <button className="btn btn-primary" style={{ background: 'var(--danger)', padding: '1rem' }} onClick={() => { setTxType('Expense'); setCurrentTxId(Date.now().toString().slice(-5)); }}>
               <Plus size={20} /> Pengeluaran
             </button>
-            <button className="btn btn-primary" style={{ background: '#0ea5e9', padding: '1rem', borderColor: '#0ea5e9' }} onClick={() => setTxType('Transfer')}>
+            <button className="btn btn-primary" style={{ background: '#0ea5e9', padding: '1rem', borderColor: '#0ea5e9' }} onClick={() => { setTxType('Transfer'); setCurrentTxId(Date.now().toString().slice(-5)); }}>
               <ArrowRightLeft size={20} /> Mutasi
             </button>
           </div>
