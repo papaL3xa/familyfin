@@ -921,29 +921,43 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
       <div className="landing-split">
         {/* Left Side: Copywriting */}
         <div className="animate-fade-up">
-          <h1 className="hero-title">Kelola Keuangan Keluarga Lebih Cerdas & Terkontrol</h1>
+          <div style={{ display: 'inline-block', padding: '0.4rem 1rem', background: 'linear-gradient(to right, #f59e0b, #ef4444)', color: '#fff', borderRadius: '100px', fontWeight: 'bold', fontSize: '0.85rem', marginBottom: '1.5rem', letterSpacing: '1px', boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)' }}>
+            🔥 PROMO TERBATAS HARI INI
+          </div>
+          <h1 className="hero-title" style={{ fontSize: '3.5rem', textShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
+            Wujudkan <br/> Keuangan Keluarga <br/> Lebih Sehat
+          </h1>
           <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '2.5rem', lineHeight: '1.6' }}>
-            FamilyFin membantu Anda mencatat setiap pengeluaran, pemasukan, mutasi, dan hutang-piutang keluarga dengan mudah dan otomatis tersinkronisasi ke Google Sheets.
+            Jangan biarkan uang bocor tanpa jejak. Catat pengeluaran, pantau hutang, dan capai target finansial Anda dengan otomatisasi pintar langsung ke Google Sheets!
           </p>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="feature-pill animate-fade-up delay-100">
-              <div style={{ padding: '0.75rem', background: 'var(--success-bg)', borderRadius: '50%', color: 'var(--success)' }}>
+            <div className="feature-pill animate-fade-up delay-100" style={{ padding: '1.25rem', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+              <div style={{ padding: '0.75rem', background: 'var(--success)', borderRadius: '50%', color: '#fff', boxShadow: '0 0 15px rgba(16, 185, 129, 0.5)' }}>
                 <CheckCircle2 size={24} />
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: '500' }}>Pencatatan Cepat & Akurat</div>
+              <div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Pencatatan Super Cepat</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Hanya butuh 3 detik untuk mencatat.</div>
+              </div>
             </div>
-            <div className="feature-pill animate-fade-up delay-200">
-              <div style={{ padding: '0.75rem', background: 'rgba(99, 102, 241, 0.15)', borderRadius: '50%', color: 'var(--primary)' }}>
+            <div className="feature-pill animate-fade-up delay-200" style={{ padding: '1.25rem', border: '1px solid rgba(99, 102, 241, 0.3)' }}>
+              <div style={{ padding: '0.75rem', background: 'var(--primary)', borderRadius: '50%', color: '#fff', boxShadow: '0 0 15px rgba(99, 102, 241, 0.5)' }}>
                 <Zap size={24} />
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: '500' }}>Otomatis ke Google Sheets</div>
+              <div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Otomatisasi Google Sheets</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Database milik Anda sendiri 100%.</div>
+              </div>
             </div>
-            <div className="feature-pill animate-fade-up delay-300">
-              <div style={{ padding: '0.75rem', background: 'var(--danger-bg)', borderRadius: '50%', color: 'var(--danger)' }}>
+            <div className="feature-pill animate-fade-up delay-300" style={{ padding: '1.25rem', border: '1px solid rgba(244, 63, 94, 0.3)' }}>
+              <div style={{ padding: '0.75rem', background: 'var(--danger)', borderRadius: '50%', color: '#fff', boxShadow: '0 0 15px rgba(244, 63, 94, 0.5)' }}>
                 <Shield size={24} />
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: '500' }}>100% Aman & Transparan</div>
+              <div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 'bold' }}>Privasi Bank-Grade</div>
+                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Tidak ada data yang kami simpan.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -1011,6 +1025,13 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
                     <div onClick={() => handlePackageClick('Bundling (2 Tahun)')} style={{ padding: '1rem', border: selectedPackage === 'Bundling (2 Tahun)' ? '2px solid var(--success)' : '1px solid var(--glass-border)', borderRadius: '12px', background: selectedPackage === 'Bundling (2 Tahun)' ? 'var(--success-bg)' : 'rgba(255, 255, 255, 0.05)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div style={{ fontWeight: 'bold', color: 'var(--success)' }}>Bundle 2 Thn</div>
                       <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--success)' }}>{appConfig.Price_Bundle}</div>
+                    </div>
+                  )}
+                  {appConfig && appConfig.Price_Lifetime && (
+                    <div onClick={() => handlePackageClick('Seumur Hidup')} style={{ padding: '1rem', border: selectedPackage === 'Seumur Hidup' ? '2px solid var(--warning)' : '1px solid var(--glass-border)', borderRadius: '12px', background: selectedPackage === 'Seumur Hidup' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.05)', cursor: 'pointer', transition: 'all 0.2s', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+                      <div style={{ position: 'absolute', top: 0, right: 0, background: 'var(--warning)', color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', padding: '0.2rem 0.5rem', borderBottomLeftRadius: '8px' }}>BEST DEAL</div>
+                      <div style={{ fontWeight: 'bold', color: 'var(--warning)' }}>Seumur Hidup</div>
+                      <div style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--warning)' }}>{appConfig.Price_Lifetime}</div>
                     </div>
                   )}
                   {appConfig && (appConfig.Promo_FreeTest === 'true' || appConfig.Promo_FreeTest === true || appConfig.Promo_FreeTest === undefined) && (
