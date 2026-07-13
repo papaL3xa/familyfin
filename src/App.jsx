@@ -1115,6 +1115,96 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
         </div>
       </div>
 
+      {/* Support Developer Section on Landing Page */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '3rem 2rem' }}>
+        <div style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1a1a2e 100%)', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* Header */}
+          <div style={{ padding: '2.5rem 1.5rem 1.5rem', textAlign: 'center' }}>
+            <div style={{ display: 'inline-block', padding: '0.35rem 1rem', background: 'rgba(99, 102, 241, 0.2)', border: '1px solid rgba(99, 102, 241, 0.4)', borderRadius: '100px', color: '#818cf8', fontWeight: '600', fontSize: '0.8rem', marginBottom: '1.25rem' }}>
+              Support Developer
+            </div>
+            <h2 style={{ color: '#f8fafc', marginBottom: '0.75rem', fontSize: '1.6rem', fontWeight: '700', lineHeight: '1.3', fontFamily: "'Playfair Display', serif", fontStyle: 'italic' }}>
+              Traktir Kopi Biar<br />Makin Semangat ☕
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.85rem', lineHeight: '1.6', maxWidth: '380px', margin: '0 auto' }}>
+              Jika FamilyFin membantumu mengatur keuangan, dukunganmu sangat berarti untuk biaya operasional server kami.
+            </p>
+          </div>
+
+          {/* Cards */}
+          <div style={{ padding: '1rem 1.5rem 2rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '1rem' }}>
+            {/* Transfer Bank */}
+            <div style={{ background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(52, 211, 153, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <CreditCard size={18} color="#34d399" />
+                </div>
+                <div>
+                  <h4 style={{ color: '#f8fafc', margin: 0, fontSize: '0.95rem' }}>Transfer Bank</h4>
+                  <p style={{ color: '#64748b', margin: 0, fontSize: '0.7rem' }}>{appConfig?.Payment_Mandiri ? 'Bank Mandiri' : 'Bank Transfer'}</p>
+                </div>
+              </div>
+              {appConfig?.Payment_Mandiri && (
+                <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ color: '#64748b', margin: '0 0 0.2rem 0', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px' }}>NO. REKENING</p>
+                    <p style={{ color: '#f8fafc', margin: 0, fontSize: '1rem', fontWeight: '700', letterSpacing: '2px', fontFamily: 'monospace' }}>{appConfig.Payment_Mandiri}</p>
+                  </div>
+                  <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_Mandiri); alert('Nomor rekening disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer', color: '#94a3b8' }}>
+                    <Edit size={14} />
+                  </button>
+                </div>
+              )}
+              {appConfig?.Payment_DANA && (
+                <div style={{ background: 'rgba(15, 23, 42, 0.6)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <p style={{ color: '#118ee9', margin: '0 0 0.2rem 0', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>DANA</p>
+                    <p style={{ color: '#f8fafc', margin: 0, fontSize: '1rem', fontWeight: '700', letterSpacing: '2px', fontFamily: 'monospace' }}>{appConfig.Payment_DANA}</p>
+                  </div>
+                  <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_DANA); alert('Nomor DANA disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer', color: '#94a3b8' }}>
+                    <Edit size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* QRIS */}
+            {appConfig?.Payment_QRIS && (
+              <div style={{ background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Receipt size={18} color="#818cf8" />
+                  </div>
+                  <div>
+                    <h4 style={{ color: '#f8fafc', margin: 0, fontSize: '0.95rem' }}>QRIS</h4>
+                    <p style={{ color: '#64748b', margin: 0, fontSize: '0.7rem' }}>Scan untuk donasi</p>
+                  </div>
+                </div>
+                <div style={{ background: '#fff', borderRadius: '12px', padding: '0.5rem', width: '100%', maxWidth: '180px' }}>
+                  <img src={appConfig.Payment_QRIS.startsWith('http') ? appConfig.Payment_QRIS : `https://drive.google.com/uc?id=${appConfig.Payment_QRIS}`} alt="QRIS" style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
+                </div>
+              </div>
+            )}
+
+            {/* Saweria */}
+            <div style={{ background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)', borderRadius: '16px', padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem', position: 'relative', overflow: 'hidden', minHeight: '180px' }}>
+              <div style={{ position: 'absolute', top: '-25px', right: '-25px', width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
+              <div style={{ position: 'absolute', bottom: '-15px', right: '30px', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+              <div style={{ position: 'relative', zIndex: 1 }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                  <Receipt size={18} color="#fff" />
+                </div>
+                <h4 style={{ color: '#fff', margin: '0 0 0.35rem 0', fontSize: '0.95rem' }}>Saweria</h4>
+                <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, fontSize: '0.8rem', lineHeight: '1.4' }}>Dukung lewat GoPay, OVO, Dana, atau QRIS.</p>
+              </div>
+              <a href={appConfig?.Support_Saweria || 'https://saweria.co/familyfin'} target="_blank" rel="noopener noreferrer" style={{ position: 'relative', zIndex: 1, display: 'block', textAlign: 'center', padding: '0.65rem', background: 'rgba(255,255,255,0.95)', color: '#ef4444', borderRadius: '10px', fontWeight: '700', fontSize: '0.9rem', textDecoration: 'none', transition: 'transform 0.2s' }}>
+                Buka Saweria ↗
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {showPayment && selectedPackage !== 'Coba Gratis 5 Hari' && (
         <PaymentModal 
           pkgName={selectedPackage} 
