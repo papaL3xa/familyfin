@@ -70,6 +70,66 @@ import {
 } from 'date-fns';
 import './index.css';
 
+// --- Custom Global Modal (Glassmorphism) ---
+export const showCustomAlert = (message) => {
+  return new Promise((resolve) => {
+    window.dispatchEvent(new CustomEvent('show-modal', {
+      detail: { type: 'alert', message, resolve }
+    }));
+  });
+};
+
+export const showCustomConfirm = (message) => {
+  return new Promise((resolve) => {
+    window.dispatchEvent(new CustomEvent('show-modal', {
+      detail: { type: 'confirm', message, resolve }
+    }));
+  });
+};
+
+function GlobalModal() {
+  const [modalData, setModalData] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => setModalData(e.detail);
+    window.addEventListener('show-modal', handler);
+    return () => window.removeEventListener('show-modal', handler);
+  }, []);
+
+  if (!modalData) return null;
+
+  const handleClose = (result) => {
+    if (modalData.resolve) modalData.resolve(result);
+    setModalData(null);
+  };
+
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999, backdropFilter: 'blur(10px)', padding: '1rem', animation: 'fadeUp 0.3s ease-out' }}>
+       <div className="card" style={{ maxWidth: '360px', width: '100%', textAlign: 'center', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '24px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', padding: '2rem 1.5rem', color: '#f8fafc' }}>
+          <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+            {modalData.type === 'alert' ? (
+              <div style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '1rem', borderRadius: '50%' }}>
+                <CheckCircle2 size={32} color="#818cf8" />
+              </div>
+            ) : (
+              <div style={{ background: 'rgba(239, 68, 68, 0.2)', padding: '1rem', borderRadius: '50%' }}>
+                <Zap size={32} color="#f87171" />
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: '1.05rem', marginBottom: '2rem', lineHeight: '1.6', fontWeight: '500' }}>{modalData.message}</p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+             {modalData.type === 'confirm' && (
+                <button className="btn btn-outline" onClick={() => handleClose(false)} style={{ flex: 1, padding: '0.7rem', borderRadius: '14px', fontWeight: '600', color: '#94a3b8', borderColor: 'rgba(255,255,255,0.1)' }}>Batal</button>
+             )}
+             <button className="btn btn-primary" onClick={() => handleClose(true)} style={{ flex: 1, padding: '0.7rem', borderRadius: '14px', fontWeight: '600', background: 'var(--primary)', border: 'none', color: '#fff' }}>OK</button>
+          </div>
+       </div>
+    </div>
+  );
+}
+// -------------------------------------------
+
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
 const getQrisImgSrc = (url) => {
@@ -396,7 +456,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
   };
 
   const handleToggleBlock = async (email) => {
-    if (!window.confirm(`Apakah Anda yakin ingin mengubah status blokir akun ${email}?`)) return;
+    if (!await showCustomConfirm(`Apakah Anda yakin ingin mengubah status blokir akun ${email}?`)) return;
     setLoading(true);
     setMessage(null);
     try {
@@ -832,18 +892,6 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
   const [message, setMessage] = useState(null);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
-
-  React.useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
-
-  // Pre-calculated fees
   const [automationFee] = useState(Math.floor(Math.random() * 900) + 100);
 
   const parsePrice = (priceStr) => {
@@ -935,30 +983,6 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
 
   return (
     <div className="landing-page" style={{ position: 'relative', minHeight: '100vh', width: '100%' }}>
-      {/* Header Landing Page */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 50, background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', borderBottom: '1px solid var(--glass-border)', padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Wallet size={18} color="#a3e635" />
-          </div>
-          <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>DuitBang.</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button onClick={() => { document.getElementById('support-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600' }}>
-            <Heart size={16} color="#ef4444" /> Dukung Dev
-          </button>
-          <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', borderRadius: '24px', fontWeight: '600' }} onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.querySelector('input[type="email"]')?.focus(); }}>
-            <LogIn size={16} style={{ marginRight: '0.4rem' }} /> Masuk Web
-          </button>
-          <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', borderRadius: '24px', background: '#1e293b', border: 'none', color: '#fff', fontWeight: '600' }} onClick={() => alert("Panduan Install WebApp (PWA):\n\n🍏 iOS (Safari):\n1. Tap icon Share (Bagikan) di bawah layar\n2. Scroll ke bawah, pilih 'Add to Home Screen'\n\n🤖 Android (Chrome):\n1. Tap menu titik tiga di pojok kanan atas\n2. Pilih 'Install app' atau 'Add to Home screen'")}>
-            <Download size={16} style={{ marginRight: '0.4rem' }} /> Download
-          </button>
-        </div>
-      </div>
-
-      <div className="theme-switch" onClick={toggleTheme}>
-        {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
-      </div>
       
       <div className="landing-split">
         {/* Left Side: Promotional Copywriting */}
@@ -1186,7 +1210,7 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
                     <p style={{ color: '#64748b', margin: '0 0 0.2rem 0', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px' }}>NO. REKENING</p>
                     <p style={{ color: '#f8fafc', margin: 0, fontSize: '1rem', fontWeight: '700', letterSpacing: '2px', fontFamily: 'monospace' }}>{appConfig.Payment_Mandiri}</p>
                   </div>
-                  <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_Mandiri); alert('Nomor rekening disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer', color: '#94a3b8' }}>
+                  <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_Mandiri); showCustomAlert('Nomor rekening disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer', color: '#94a3b8' }}>
                     <Edit size={14} />
                   </button>
                 </div>
@@ -1197,7 +1221,7 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
                     <p style={{ color: '#118ee9', margin: '0 0 0.2rem 0', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>DANA</p>
                     <p style={{ color: '#f8fafc', margin: 0, fontSize: '1rem', fontWeight: '700', letterSpacing: '2px', fontFamily: 'monospace' }}>{appConfig.Payment_DANA}</p>
                   </div>
-                  <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_DANA); alert('Nomor DANA disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer', color: '#94a3b8' }}>
+                  <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_DANA); showCustomAlert('Nomor DANA disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.4rem', cursor: 'pointer', color: '#94a3b8' }}>
                     <Edit size={14} />
                   </button>
                 </div>
@@ -1265,6 +1289,16 @@ function App() {
   const [activeTab, setActiveTab] = useState(currentUser ? (currentUser.spreadsheetId ? 'home' : 'admin') : 'login');
   const [apiUrl, setApiUrl] = useState(localStorage.getItem('gas_api_url') || DEFAULT_API_URL);
   const [showSettings, setShowSettings] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -1362,7 +1396,7 @@ function App() {
       XLSX.writeFile(wb, `FamilyFin_Backup_${dateStr}.xlsx`);
     } catch (err) {
       console.error("Backup failed", err);
-      alert("Gagal melakukan backup data.");
+      showCustomAlert("Gagal melakukan backup data.");
     }
   };
 
@@ -1391,7 +1425,7 @@ function App() {
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('JSON Backup failed', err);
-      alert('Gagal melakukan backup JSON.');
+      showCustomAlert('Gagal melakukan backup JSON.');
     }
   };
 
@@ -1401,7 +1435,7 @@ function App() {
       const backupData = JSON.parse(text);
 
       if (!backupData.data) {
-        alert('Format file backup tidak valid. Pastikan file berasal dari FamilyFin.');
+        showCustomAlert('Format file backup tidak valid. Pastikan file berasal dari FamilyFin.');
         return;
       }
 
@@ -1471,63 +1505,92 @@ function App() {
       if (errors.length > 0) {
         msg += `\n\n⚠️ ${errors.length} item gagal dipulihkan.`;
       }
-      alert(msg);
+      showCustomAlert(msg);
     } catch (err) {
       console.error('Restore failed', err);
-      alert('Gagal restore data. Pastikan format file JSON benar.');
+      showCustomAlert('Gagal restore data. Pastikan format file JSON benar.');
     }
   };
 
   return (
     <div className="app-layout">
+      <GlobalModal />
       {/* Top Header */}
-      <header className="top-header">
-        <div className="header-brand">
-          <Wallet size={24} color="#6366f1" />
-          <span>FamilyFin</span>
-        </div>
-
-        {currentUser ? (
-          <div className="header-nav">
-            {currentUser.spreadsheetId && (
+      <header className="top-header" style={!currentUser ? { position: 'sticky', top: 0, zIndex: 50, background: 'var(--glass-bg)', backdropFilter: 'var(--glass-blur)', borderBottom: '1px solid var(--glass-border)', padding: '1rem 2rem', display: 'flex', justifyContent: 'center' } : {}}>
+        <div style={!currentUser ? { maxWidth: '1200px', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } : { display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+          
+          <div className={!currentUser ? '' : 'header-brand'} style={!currentUser ? { display: 'flex', alignItems: 'center', gap: '0.75rem' } : {}}>
+            {currentUser ? (
               <>
-                <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-                  <Home size={18} /> Beranda
+                <Wallet size={24} color="#6366f1" />
+                <span>FamilyFin</span>
+              </>
+            ) : (
+              <>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Wallet size={18} color="#a3e635" />
                 </div>
-                <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                  <LayoutDashboard size={18} /> Statistik
-                </div>
-                <div className={`nav-item ${activeTab === 'debts' ? 'active' : ''}`} onClick={() => setActiveTab('debts')}>
-                  <Receipt size={18} /> Hutang
-                </div>
-                <div className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}>
-                  <ArrowRightLeft size={18} /> Transaksi
-                </div>
-                <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-                  <Settings size={18} /> Pengaturan
-                </div>
+                <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-main)', letterSpacing: '-0.5px' }}>FamilyFin</span>
               </>
             )}
-            {currentUser.role === 'admin' && (
-              <div className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
-                <Shield size={18} /> Admin
-              </div>
-            )}
           </div>
-        ) : (
-          !apiUrl && (
-            <div
-              style={{ cursor: 'pointer', color: 'white', padding: '0.5rem', background: 'rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onClick={() => setShowSettings(true)}
-            >
-              <Settings size={20} />
+
+          {currentUser ? (
+            <div className="header-nav">
+              {currentUser.spreadsheetId && (
+                <>
+                  <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
+                    <Home size={18} /> Beranda
+                  </div>
+                  <div className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+                    <LayoutDashboard size={18} /> Statistik
+                  </div>
+                  <div className={`nav-item ${activeTab === 'debts' ? 'active' : ''}`} onClick={() => setActiveTab('debts')}>
+                    <Receipt size={18} /> Hutang
+                  </div>
+                  <div className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`} onClick={() => setActiveTab('transactions')}>
+                    <ArrowRightLeft size={18} /> Transaksi
+                  </div>
+                  <div className={`nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+                    <Settings size={18} /> Pengaturan
+                  </div>
+                </>
+              )}
+              {currentUser.role === 'admin' && (
+                <div className={`nav-item ${activeTab === 'admin' ? 'active' : ''}`} onClick={() => setActiveTab('admin')}>
+                  <Shield size={18} /> Admin
+                </div>
+              )}
             </div>
-          )
-        )}
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <button onClick={() => { document.getElementById('support-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600' }}>
+                <Heart size={16} color="#ef4444" /> Dukung Dev
+              </button>
+              <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', borderRadius: '24px', fontWeight: '600' }} onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.querySelector('input[type="email"]')?.focus(); }}>
+                <LogIn size={16} style={{ marginRight: '0.4rem' }} /> Masuk Web
+              </button>
+              <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', borderRadius: '24px', background: '#1e293b', border: 'none', color: '#fff', fontWeight: '600' }} onClick={() => showCustomAlert("Panduan Install WebApp (PWA):\n\n🍏 iOS (Safari):\n1. Tap icon Share (Bagikan) di bawah layar\n2. Scroll ke bawah, pilih 'Add to Home Screen'\n\n🤖 Android (Chrome):\n1. Tap menu titik tiga di pojok kanan atas\n2. Pilih 'Install app' atau 'Add to Home screen'")}>
+                <Download size={16} style={{ marginRight: '0.4rem' }} /> Download
+              </button>
+              <div className="theme-switch" onClick={toggleTheme} style={{ position: 'relative', top: 'auto', right: 'auto', background: 'transparent', border: '1px solid var(--glass-border)', display: 'flex', width: '38px', height: '38px' }}>
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </div>
+              {!apiUrl && (
+                <div
+                  style={{ cursor: 'pointer', color: 'var(--text-main)', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  onClick={() => setShowSettings(true)}
+                >
+                  <Settings size={18} />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       {/* Main Content */}
-      <div className="main-content">
+      <div className="main-content" style={!currentUser ? { padding: 0, maxWidth: 'none' } : {}}>
         {subscriptionWarning && (
           <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#dc2626', border: '2px solid #dc2626', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', boxShadow: '0 4px 6px rgba(239, 68, 68, 0.2)', gap: '1rem' }}>
             <span style={{ fontSize: '1rem', flex: 1 }}><strong>Perhatian:</strong> {subscriptionWarning}</span>
@@ -1714,7 +1777,7 @@ function HomeTab({ setActiveTab, appConfig }) {
                   <p style={{ color: '#64748b', margin: '0 0 0.35rem 0', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px' }}>NO. REKENING</p>
                   <p style={{ color: '#f8fafc', margin: 0, fontSize: '1.2rem', fontWeight: '700', letterSpacing: '2px', fontFamily: 'monospace' }}>{appConfig.Payment_Mandiri}</p>
                 </div>
-                <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_Mandiri); alert('Nomor rekening disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', color: '#94a3b8' }}>
+                <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_Mandiri); showCustomAlert('Nomor rekening disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', color: '#94a3b8' }}>
                   <Edit size={16} />
                 </button>
               </div>
@@ -1725,7 +1788,7 @@ function HomeTab({ setActiveTab, appConfig }) {
                   <p style={{ color: '#118ee9', margin: '0 0 0.35rem 0', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>DANA</p>
                   <p style={{ color: '#f8fafc', margin: 0, fontSize: '1.1rem', fontWeight: '700', letterSpacing: '2px', fontFamily: 'monospace' }}>{appConfig.Payment_DANA}</p>
                 </div>
-                <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_DANA); alert('Nomor DANA disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', color: '#94a3b8' }}>
+                <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_DANA); showCustomAlert('Nomor DANA disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', color: '#94a3b8' }}>
                   <Edit size={16} />
                 </button>
               </div>
@@ -1736,7 +1799,7 @@ function HomeTab({ setActiveTab, appConfig }) {
                   <p style={{ color: '#ee4d2d', margin: '0 0 0.35rem 0', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '600' }}>SHOPEEPAY</p>
                   <p style={{ color: '#f8fafc', margin: 0, fontSize: '1.1rem', fontWeight: '700', letterSpacing: '2px', fontFamily: 'monospace' }}>{appConfig.Payment_SPay}</p>
                 </div>
-                <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_SPay); alert('Nomor ShopeePay disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', color: '#94a3b8' }}>
+                <button onClick={() => { navigator.clipboard.writeText(appConfig.Payment_SPay); showCustomAlert('Nomor ShopeePay disalin!'); }} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '0.5rem', cursor: 'pointer', color: '#94a3b8' }}>
                   <Edit size={16} />
                 </button>
               </div>
@@ -2040,7 +2103,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
         const date = form.elements.date.value;
         
         if (fromWallet === toWallet) {
-          alert("Dompet asal dan tujuan tidak boleh sama");
+          showCustomAlert("Dompet asal dan tujuan tidak boleh sama");
           setIsSubmitting(false);
           return;
         }
@@ -2070,7 +2133,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
       setTxType(null);
       onRefresh();
     } catch (err) {
-      alert("Gagal menambahkan transaksi");
+      showCustomAlert("Gagal menambahkan transaksi");
     } finally {
       setIsSubmitting(false);
     }
@@ -2095,19 +2158,19 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
       setEditingTx(null);
       onRefresh();
     } catch (err) {
-      alert("Gagal memperbarui transaksi");
+      showCustomAlert("Gagal memperbarui transaksi");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Hapus transaksi ini?")) return;
+    if (!await showCustomConfirm("Hapus transaksi ini?")) return;
     try {
       await deleteTransaction(id);
       onRefresh();
     } catch (err) {
-      alert("Gagal menghapus transaksi");
+      showCustomAlert("Gagal menghapus transaksi");
     }
   }
 
@@ -2463,19 +2526,19 @@ function CategoriesTab({ categories, onRefresh, isLoading }) {
       form.reset();
       onRefresh();
     } catch (err) {
-      alert("Gagal menambah kategori");
+      showCustomAlert("Gagal menambah kategori");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Hapus kategori ini?")) return;
+    if (!await showCustomConfirm("Hapus kategori ini?")) return;
     try {
       await deleteCategory(id);
       onRefresh();
     } catch (err) {
-      alert("Gagal menghapus kategori");
+      showCustomAlert("Gagal menghapus kategori");
     }
   }
 
@@ -2631,7 +2694,7 @@ function WalletsTab({ wallets, onRefresh, isLoading }) {
       setIconBase64("");
       onRefresh();
     } catch (err) {
-      alert("Gagal menambah dompet");
+      showCustomAlert("Gagal menambah dompet");
     } finally {
       setIsSubmitting(false);
     }
@@ -2652,19 +2715,19 @@ function WalletsTab({ wallets, onRefresh, isLoading }) {
       setEditIconBase64("");
       onRefresh();
     } catch (err) {
-      alert("Gagal memperbarui dompet");
+      showCustomAlert("Gagal memperbarui dompet");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Hapus dompet ini?")) return;
+    if (!await showCustomConfirm("Hapus dompet ini?")) return;
     try {
       await deleteWallet(id);
       onRefresh();
     } catch (err) {
-      alert("Gagal menghapus dompet");
+      showCustomAlert("Gagal menghapus dompet");
     }
   }
 
@@ -2810,7 +2873,7 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
       form.reset();
       onRefresh();
     } catch (err) {
-      alert("Gagal mencatat hutang baru");
+      showCustomAlert("Gagal mencatat hutang baru");
     } finally {
       setIsSubmitting(false);
     }
@@ -2843,7 +2906,7 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
       setManagingDebt(null);
       onRefresh();
     } catch (err) {
-      alert("Gagal mengupdate hutang");
+      showCustomAlert("Gagal mengupdate hutang");
     } finally {
       setIsSubmitting(false);
     }
@@ -2887,19 +2950,19 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
       setPayingDebt(null);
       onRefresh();
     } catch (err) {
-      alert("Gagal memproses pembayaran");
+      showCustomAlert("Gagal memproses pembayaran");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   const handleDeleteDebt = async (id) => {
-    if (!window.confirm("Hapus catatan hutang ini? (Transaksi pembayaran tidak akan terhapus)")) return;
+    if (!await showCustomConfirm("Hapus catatan hutang ini? (Transaksi pembayaran tidak akan terhapus)")) return;
     try {
       await deleteDebt(id);
       onRefresh();
     } catch (err) {
-      alert("Gagal menghapus hutang");
+      showCustomAlert("Gagal menghapus hutang");
     }
   }
 
@@ -3135,13 +3198,13 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
-    alert("Berhasil disalin!");
+    showCustomAlert("Berhasil disalin!");
   };
 
   const handleConfirm = () => {
     const waNumber = appConfig?.Admin_WA || currentUser?.adminWa || '';
     if (!waNumber) {
-      alert("Nomor WhatsApp Admin belum diatur.");
+      showCustomAlert("Nomor WhatsApp Admin belum diatur.");
       return;
     }
     const email = currentUser?.email ? `Email: ${currentUser.email}` : '';
@@ -3471,7 +3534,7 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
                     <input type="file" accept=".json" style={{ display: 'none' }} disabled={restoring} onChange={async (e) => {
                       const file = e.target.files[0];
                       if (!file) return;
-                      if (!confirm(`Anda akan memulihkan data dari file "${file.name}".\n\nData yang sudah ada tidak akan diduplikat.\n\nLanjutkan?`)) {
+                      if (!(await showCustomConfirm(`Anda akan memulihkan data dari file "${file.name}".\n\nData yang sudah ada tidak akan diduplikat.\n\nLanjutkan?`))) {
                         e.target.value = '';
                         return;
                       }
