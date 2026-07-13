@@ -543,6 +543,22 @@ h1, h2, h3, h4, h5, h6 {
   .home-quick-actions {
     flex-direction: column;
   }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .top-header .btn {
+    padding: 0.5rem !important;
+    width: 38px;
+    height: 38px;
+    border-radius: 50% !important;
+    justify-content: center;
+  }
+  
+  .top-header button {
+    gap: 0 !important;
+  }
 }
 
 /* File Input Glassmorphism Styling */

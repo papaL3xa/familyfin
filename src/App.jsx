@@ -117,7 +117,7 @@ function GlobalModal() {
               </div>
             )}
           </div>
-          <p style={{ fontSize: '1.05rem', marginBottom: '2rem', lineHeight: '1.6', fontWeight: '500' }}>{modalData.message}</p>
+          <p style={{ fontSize: '1.05rem', marginBottom: '2rem', lineHeight: '1.6', fontWeight: '500', whiteSpace: 'pre-wrap' }}>{modalData.message}</p>
           <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
              {modalData.type === 'confirm' && (
                 <button className="btn btn-outline" onClick={() => handleClose(false)} style={{ flex: 1, padding: '0.7rem', borderRadius: '14px', fontWeight: '600', color: '#94a3b8', borderColor: 'rgba(255,255,255,0.1)' }}>Batal</button>
@@ -1565,13 +1565,13 @@ function App() {
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <button onClick={() => { document.getElementById('support-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600' }}>
-                <Heart size={16} color="#ef4444" /> Dukung Dev
+                <Heart size={16} color="#ef4444" /> <span className="desktop-only">Dukung Dev</span>
               </button>
               <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', borderRadius: '24px', fontWeight: '600' }} onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.querySelector('input[type="email"]')?.focus(); }}>
-                <LogIn size={16} style={{ marginRight: '0.4rem' }} /> Masuk Web
+                <LogIn size={16} style={{ marginRight: '0.4rem' }} /> <span className="desktop-only">Masuk Web</span>
               </button>
               <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', borderRadius: '24px', background: '#1e293b', border: 'none', color: '#fff', fontWeight: '600' }} onClick={() => showCustomAlert("Panduan Install WebApp (PWA):\n\n🍏 iOS (Safari):\n1. Tap icon Share (Bagikan) di bawah layar\n2. Scroll ke bawah, pilih 'Add to Home Screen'\n\n🤖 Android (Chrome):\n1. Tap menu titik tiga di pojok kanan atas\n2. Pilih 'Install app' atau 'Add to Home screen'")}>
-                <Download size={16} style={{ marginRight: '0.4rem' }} /> Download
+                <Download size={16} style={{ marginRight: '0.4rem' }} /> <span className="desktop-only">Download</span>
               </button>
               <div className="theme-switch" onClick={toggleTheme} style={{ position: 'relative', top: 'auto', right: 'auto', background: 'transparent', border: '1px solid var(--glass-border)', display: 'flex', width: '38px', height: '38px' }}>
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -2512,6 +2512,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
 
 function CategoriesTab({ categories, onRefresh, isLoading }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -2522,11 +2523,17 @@ function CategoriesTab({ categories, onRefresh, isLoading }) {
       name: form.elements.name.value
     };
     try {
-      await addCategory(cat);
+      if (editingCategory) {
+        await deleteCategory(editingCategory.id);
+        await addCategory(cat);
+        setEditingCategory(null);
+      } else {
+        await addCategory(cat);
+      }
       form.reset();
       onRefresh();
     } catch (err) {
-      showCustomAlert("Gagal menambah kategori");
+      showCustomAlert(editingCategory ? "Gagal memperbarui kategori" : "Gagal menambah kategori");
     } finally {
       setIsSubmitting(false);
     }
@@ -2545,8 +2552,15 @@ function CategoriesTab({ categories, onRefresh, isLoading }) {
   return (
     <div>
       <div className="card">
-        <h3 style={{ marginBottom: '1rem', fontSize: '1rem' }}>Tambah Kategori Baru</h3>
-        <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ fontSize: '1rem', margin: 0 }}>{editingCategory ? 'Edit Kategori' : 'Tambah Kategori Baru'}</h3>
+          {editingCategory && (
+            <button className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }} onClick={() => { setEditingCategory(null); document.getElementById('category-form').reset(); }}>
+              Batal Edit
+            </button>
+          )}
+        </div>
+        <form id="category-form" onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Tipe Kategori</label>
             <GlassSelect
@@ -2564,7 +2578,7 @@ function CategoriesTab({ categories, onRefresh, isLoading }) {
             <input type="text" name="name" className="form-control" placeholder="Contoh: Bensin, Uang Jajan..." required />
           </div>
           <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Menyimpan...' : 'Tambah Kategori'}
+            {isSubmitting ? 'Menyimpan...' : (editingCategory ? 'Simpan Perubahan' : 'Tambah Kategori')}
           </button>
         </form>
       </div>
@@ -2588,7 +2602,10 @@ function CategoriesTab({ categories, onRefresh, isLoading }) {
                       <h4 style={{ fontSize: '0.95rem' }}>{c.name}</h4>
                     </div>
                   </div>
-                  <div className="feed-item-right">
+                  <div className="feed-item-right" style={{ flexDirection: 'row' }}>
+                    <button className="btn" style={{ padding: '0.25rem', color: 'var(--primary)', background: 'transparent' }} onClick={() => { setEditingCategory(c); const form = document.getElementById('category-form'); form.elements.type.value = c.type; form.elements.name.value = c.name; window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                      <Edit size={16} />
+                    </button>
                     <button className="btn" style={{ padding: '0.25rem', color: 'var(--danger)', background: 'transparent' }} onClick={() => handleDelete(c.id)}>
                       <Trash2 size={16} />
                     </button>
@@ -2617,7 +2634,10 @@ function CategoriesTab({ categories, onRefresh, isLoading }) {
                       <h4 style={{ fontSize: '0.95rem' }}>{c.name}</h4>
                     </div>
                   </div>
-                  <div className="feed-item-right">
+                  <div className="feed-item-right" style={{ flexDirection: 'row' }}>
+                    <button className="btn" style={{ padding: '0.25rem', color: 'var(--primary)', background: 'transparent' }} onClick={() => { setEditingCategory(c); const form = document.getElementById('category-form'); form.elements.type.value = c.type; form.elements.name.value = c.name; window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+                      <Edit size={16} />
+                    </button>
                     <button className="btn" style={{ padding: '0.25rem', color: 'var(--danger)', background: 'transparent' }} onClick={() => handleDelete(c.id)}>
                       <Trash2 size={16} />
                     </button>
