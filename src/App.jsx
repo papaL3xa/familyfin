@@ -2092,7 +2092,7 @@ function ReceiptModal({ transaction, onClose }) {
             <span style={{ fontWeight: 'bold' }}>Total:</span>
             <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Rp {parseInt(transaction.amount).toLocaleString('id-ID')}</span>
           </div>
-          <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '1.5rem' }}>
+          <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '1.5rem', whiteSpace: 'pre-wrap' }}>
             {localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.'}
           </div>
         </div>
@@ -2128,7 +2128,7 @@ function ReceiptModal({ transaction, onClose }) {
             <div><strong>Total:</strong> Rp {parseInt(transaction.amount).toLocaleString('id-ID')}</div>
           </div>
           
-          <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '12px' }}>
+          <div style={{ textAlign: 'center', marginTop: '2rem', fontSize: '12px', whiteSpace: 'pre-wrap' }}>
             {localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.'}
           </div>
         </div>
@@ -2182,7 +2182,9 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
         setReceiptData({ trxId, date, fromWallet, toWallet, amount, note: note || 'Mutasi Dompet' });
         
       } else {
+        const txId = 'tx_' + Date.now();
         const tx = {
+          id: txId,
           date: form.elements.date.value,
           type: txType,
           amount: form.elements.amount.value,
@@ -2191,6 +2193,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
           note: form.elements.note.value
         };
         await addTransaction(tx);
+        setPrintingTransaction(tx);
       }
       
       form.reset();
@@ -2553,7 +2556,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
                 <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>Jumlah:</span>
                 <span style={{ fontWeight: 'bold', fontSize: '1.25rem' }}>Rp {Number(receiptData.amount).toLocaleString('id-ID')}</span>
               </div>
-              <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '1.5rem' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.8rem', color: '#666', marginTop: '1.5rem', whiteSpace: 'pre-wrap' }}>
                 {localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.'}
               </div>
             </div>
@@ -2598,7 +2601,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
               </div>
               
               <div style={{ borderBottom: '1px dashed #000', margin: '0.5rem 0' }}></div>
-              <div style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '1rem' }}>
+              <div style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '1rem', whiteSpace: 'pre-wrap' }}>
                 {localStorage.getItem('printFooter') || 'Terima kasih telah menggunakan FamilyFin.'}
               </div>
             </div>
@@ -3640,12 +3643,12 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
             <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.3)', borderTop: '1px solid var(--glass-border)' }}>
               <div className="form-group">
                 <label>Teks Footer / Penutup Struk</label>
-                <input 
-                  type="text" 
+                <textarea 
                   className="form-control" 
                   value={printFooterText} 
                   onChange={(e) => setPrintFooterText(e.target.value)} 
-                  placeholder="Terima kasih telah berbelanja..." 
+                  placeholder="Terima kasih telah berbelanja...\nSemoga harimu menyenangkan!" 
+                  rows={3}
                 />
               </div>
               <button 
