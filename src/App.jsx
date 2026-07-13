@@ -70,6 +70,19 @@ import './index.css';
 
 const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
+const getQrisImgSrc = (url) => {
+  if (url && url.includes('drive.google.com/file/d/')) {
+    const match = url.match(/\/d\/(.*?)\//);
+    if (match && match[1]) {
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+    }
+  }
+  if (url && !url.startsWith('http')) {
+    return `https://drive.google.com/thumbnail?id=${url}&sz=w1000`;
+  }
+  return url;
+};
+
 const formatDate = (dateStr) => {
   try {
     const d = new Date(dateStr);
@@ -1181,7 +1194,7 @@ function AuthScreen({ onLoginSuccess, apiUrl, onSaveApiUrl, appConfig }) {
                   </div>
                 </div>
                 <div style={{ background: '#fff', borderRadius: '12px', padding: '0.5rem', width: '100%', maxWidth: '180px' }}>
-                  <img src={appConfig.Payment_QRIS.startsWith('http') ? appConfig.Payment_QRIS : `https://drive.google.com/uc?id=${appConfig.Payment_QRIS}`} alt="QRIS" style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
+                  <img src={getQrisImgSrc(appConfig.Payment_QRIS)} alt="QRIS" style={{ width: '100%', borderRadius: '8px', display: 'block' }} />
                 </div>
               </div>
             )}
@@ -3455,7 +3468,7 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
                     </div>
                     <div style={{ background: '#fff', borderRadius: '12px', padding: '0.75rem', width: '100%', maxWidth: '220px' }}>
                       <img 
-                        src={appConfig.Payment_QRIS.startsWith('http') ? appConfig.Payment_QRIS : `https://drive.google.com/uc?id=${appConfig.Payment_QRIS}`} 
+                        src={getQrisImgSrc(appConfig.Payment_QRIS)} 
                         alt="QRIS" 
                         style={{ width: '100%', borderRadius: '8px', display: 'block' }} 
                       />
