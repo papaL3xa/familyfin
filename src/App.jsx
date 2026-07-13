@@ -2273,6 +2273,8 @@ function WalletsTab({ wallets, onRefresh, isLoading }) {
 function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [payingDebt, setPayingDebt] = useState(null); // stores the debt object when paying
+  const [managingDebt, setManagingDebt] = useState(null);
+  const [filterStatus, setFilterStatus] = useState('Belum Lunas');
 
   const getWalletBalance = (walletName) => {
     let balance = 0;
@@ -2372,65 +2374,88 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
           <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: '200px' }}>
             <label>Total Hutang (Rp)</label>
             <CurrencyInput name="amount" className="form-control" required />
-          </div>
           <button type="submit" className="btn btn-primary" style={{ background: 'var(--danger)', height: '42px', flexShrink: 0 }} disabled={isSubmitting}>
             {isSubmitting ? '...' : 'Tambah Hutang'}
           </button>
         </form>
       </div>
 
-      <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Daftar Hutang Anda</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Daftar Hutang Anda</h3>
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+        {['Belum Lunas', 'Lunas', 'Semua'].map(status => (
+          <button
+            key={status}
+            className={`btn ${filterStatus === status ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => setFilterStatus(status)}
+            style={{ flexShrink: 0, padding: '0.4rem 1rem', borderRadius: '20px', fontSize: '0.85rem' }}
+          >
+            {status}
+          </button>
+        ))}
+      </div>
+
       {isLoading ? <p style={{ color: 'var(--text-muted)' }}>Memuat...</p> : (
         <div className="grid-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
-          {(Array.isArray(debts) ? debts : []).map(debt => {
-            const total = Number(debt.amount);
-            // Calculate how much has been paid for this debt
-            const paid = transactions
-              .filter(t => t.debt_id === debt.id && t.type === 'Expense')
-              .reduce((sum, t) => sum + Number(t.amount), 0);
+          {(()=>{
+            const debtsWithStatus = (Array.isArray(debts) ? debts : []).map(debt => {
+              const total = Number(debt.amount);
+              const paid = transactions
+                .filter(t => t.debt_id === debt.id && t.type === 'Expense')
+                .reduce((sum, t) => sum + Number(t.amount), 0);
+              const remaining = total - paid;
+              const isPaidOff = remaining <= 0;
+              return { ...debt, total, paid, remaining, isPaidOff };
+            });
 
-            const remaining = total - paid;
-            const progress = total > 0 ? Math.min(100, Math.max(0, (paid / total) * 100)) : 0;
-            const isPaidOff = remaining <= 0;
+            const filteredDebts = debtsWithStatus.filter(d => {
+              if (filterStatus === 'Lunas') return d.isPaidOff;
+              if (filterStatus === 'Belum Lunas') return !d.isPaidOff;
+              return true;
+            });
 
-            return (
-              <div className="card" key={debt.id} style={{ padding: '1.25rem' }}>
+            if (filteredDebts.length === 0) {
+              return <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', gridColumn: '1 / -1' }}>Belum ada catatan hutang sesuai filter.</p>;
+            }
+
+            return filteredDebts.map(d => (
+              <div className="card" key={d.id} style={{ padding: '1.25rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
                   <div>
-                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem' }}>{debt.name}</h4>
-                    <span className={`badge ${isPaidOff ? 'income' : 'expense'}`}>
-                      {isPaidOff ? 'LUNAS' : 'BELUM LUNAS'}
+                    <h4 style={{ margin: '0 0 0.25rem 0', fontSize: '1.1rem' }}>{d.name}</h4>
+                    <span className={`badge ${d.isPaidOff ? 'income' : 'expense'}`}>
+                      {d.isPaidOff ? 'LUNAS' : 'BELUM LUNAS'}
                     </span>
                   </div>
-                  <button className="btn" style={{ padding: '0.25rem', color: 'var(--text-muted)', background: 'transparent' }} onClick={() => handleDeleteDebt(debt.id)}>
-                    <Trash2 size={16} />
-                  </button>
+                  {!d.isPaidOff && (
+                    <button className="btn" style={{ padding: '0.25rem', color: 'var(--text-muted)', background: 'transparent' }} onClick={() => setManagingDebt(d)}>
+                      <Edit size={16} />
+                    </button>
+                  )}
                 </div>
 
                 <div style={{ marginBottom: '1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', marginBottom: '0.25rem', color: 'var(--text-muted)' }}>
-                    <span>Terbayar: Rp {paid.toLocaleString('id-ID')}</span>
-                    <span>Total: Rp {total.toLocaleString('id-ID')}</span>
+                    <span>Terbayar: Rp {d.paid.toLocaleString('id-ID')}</span>
+                    <span>Total: Rp {d.total.toLocaleString('id-ID')}</span>
                   </div>
                   <div className="progress-bar-bg" style={{ width: '100%', height: '8px', background: 'var(--glass-border)', borderRadius: '4px', overflow: 'hidden' }}>
-                    <div className="progress-bar-fill" style={{ width: `${progress}%`, height: '100%', background: isPaidOff ? 'var(--success)' : 'var(--primary)', transition: 'width 0.3s' }}></div>
+                    <div className="progress-bar-fill" style={{ width: `${d.total > 0 ? Math.min(100, Math.max(0, (d.paid / d.total) * 100)) : 0}%`, height: '100%', background: d.isPaidOff ? 'var(--success)' : 'var(--primary)', transition: 'width 0.3s' }}></div>
                   </div>
-                  <p style={{ marginTop: '0.5rem', fontSize: '0.95rem', fontWeight: 600, color: isPaidOff ? 'var(--success)' : 'var(--danger)' }}>
-                    Sisa: Rp {Math.max(0, remaining).toLocaleString('id-ID')}
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.95rem', fontWeight: 600, color: d.isPaidOff ? 'var(--success)' : 'var(--danger)' }}>
+                    Sisa: Rp {Math.max(0, d.remaining).toLocaleString('id-ID')}
                   </p>
                 </div>
 
-                {!isPaidOff && payingDebt?.id !== debt.id && (
-                  <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setPayingDebt(debt)}>
+                {!d.isPaidOff && (
+                  <button className="btn btn-outline" style={{ width: '100%' }} onClick={() => setPayingDebt(d)}>
                     Bayar Hutang Ini
                   </button>
                 )}
               </div>
-            );
-          })}
-          {(Array.isArray(debts) ? debts : []).length === 0 && (
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', gridColumn: '1 / -1' }}>Belum ada catatan hutang.</p>
-          )}
+            ));
+          })()}
         </div>
       )}
 
@@ -2490,6 +2515,39 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Popup Modal Kelola Hutang */}
+      {managingDebt && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: '0 0 1rem 0' }}>Kelola Hutang</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}><strong>{managingDebt.name}</strong></p>
+            
+            <div style={{ padding: '1rem', background: 'var(--glass-bg)', borderRadius: '8px', marginBottom: '1rem' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Pengubahan nama atau nominal hutang secara langsung belum tersedia. Untuk menghapus hutang ini, tekan tombol di bawah.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <button 
+                type="button" 
+                className="btn btn-primary" 
+                style={{ background: 'var(--danger)', borderColor: 'transparent', padding: '0.75rem', borderRadius: '8px', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} 
+                onClick={() => {
+                  handleDeleteDebt(managingDebt.id);
+                  setManagingDebt(null);
+                }}
+              >
+                <Trash2 size={16} /> Hapus Hutang Ini
+              </button>
+              <button type="button" className="btn btn-outline" style={{ padding: '0.75rem', borderRadius: '8px' }} onClick={() => setManagingDebt(null)}>
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
