@@ -1563,24 +1563,21 @@ function App() {
               )}
             </div>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <button onClick={() => { document.getElementById('support-section')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.9rem', fontWeight: '600' }}>
-                <Heart size={16} color="#ef4444" /> <span className="desktop-only">Dukung Dev</span>
+            <div className="header-actions">
+              <button className="btn-support" onClick={() => { document.getElementById('support-section')?.scrollIntoView({ behavior: 'smooth' }); }}>
+                <Heart size={16} color="#ef4444" /> <span>Dukung Dev</span>
               </button>
-              <button className="btn btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', borderRadius: '24px', fontWeight: '600' }} onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.querySelector('input[type="email"]')?.focus(); }}>
-                <LogIn size={16} style={{ marginRight: '0.4rem' }} /> <span className="desktop-only">Masuk Web</span>
+              <button className="btn btn-outline header-btn" onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); document.querySelector('input[type="email"]')?.focus(); }}>
+                <LogIn size={16} /> <span className="btn-text">Masuk</span>
               </button>
-              <button className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', borderRadius: '24px', background: '#1e293b', border: 'none', color: '#fff', fontWeight: '600' }} onClick={() => showCustomAlert("Panduan Install WebApp (PWA):\n\n🍏 iOS (Safari):\n1. Tap icon Share (Bagikan) di bawah layar\n2. Scroll ke bawah, pilih 'Add to Home Screen'\n\n🤖 Android (Chrome):\n1. Tap menu titik tiga di pojok kanan atas\n2. Pilih 'Install app' atau 'Add to Home screen'")}>
-                <Download size={16} style={{ marginRight: '0.4rem' }} /> <span className="desktop-only">Download</span>
+              <button className="btn btn-primary header-btn" style={{ background: '#1e293b', border: 'none', color: '#fff' }} onClick={() => showCustomAlert("Panduan Install WebApp (PWA):\n\n🍏 iOS (Safari):\n1. Tap icon Share (Bagikan) di bawah layar\n2. Scroll ke bawah, pilih 'Add to Home Screen'\n\n🤖 Android (Chrome):\n1. Tap menu titik tiga di pojok kanan atas\n2. Pilih 'Install app' atau 'Add to Home screen'")}>
+                <Download size={16} /> <span className="btn-text">App (PWA)</span>
               </button>
-              <div className="theme-switch" onClick={toggleTheme} style={{ position: 'relative', top: 'auto', right: 'auto', background: 'transparent', border: '1px solid var(--glass-border)', display: 'flex', width: '38px', height: '38px' }}>
+              <div className="theme-switch-header" onClick={toggleTheme}>
                 {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
               </div>
               {!apiUrl && (
-                <div
-                  style={{ cursor: 'pointer', color: 'var(--text-main)', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  onClick={() => setShowSettings(true)}
-                >
+                <div className="settings-btn-header" onClick={() => setShowSettings(true)}>
                   <Settings size={18} />
                 </div>
               )}
