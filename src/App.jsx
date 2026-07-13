@@ -1524,6 +1524,7 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [txType, setTxType] = useState(null);
   const [editingTx, setEditingTx] = useState(null);
+  const [receiptData, setReceiptData] = useState(null);
 
   // Filter States
   const [filterType, setFilterType] = useState('All');
@@ -1538,17 +1539,41 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
     e.preventDefault();
     setIsSubmitting(true);
     const form = e.target;
-    const tx = {
-      date: form.elements.date.value,
-      type: txType,
-      amount: form.elements.amount.value,
-      category: form.elements.category.value,
-      wallet: form.elements.wallet.value,
-      note: form.elements.note.value
-    };
 
     try {
-      await addTransaction(tx);
+      if (txType === 'Transfer') {
+        const amount = form.elements.amount.value;
+        const fromWallet = form.elements.fromWallet.value;
+        const toWallet = form.elements.toWallet.value;
+        const note = form.elements.note.value;
+        const date = form.elements.date.value;
+        
+        if (fromWallet === toWallet) {
+          alert("Dompet asal dan tujuan tidak boleh sama");
+          setIsSubmitting(false);
+          return;
+        }
+
+        const trxId = 'MUT-' + Date.now().toString().slice(-6);
+        const fullNote = note ? `[${trxId}] ${note}` : `[${trxId}] Mutasi`;
+
+        await addTransaction({ date, type: 'Expense', amount, category: 'Mutasi Keluar', wallet: fromWallet, note: `${fullNote} ke ${toWallet}` });
+        await addTransaction({ date, type: 'Income', amount, category: 'Mutasi Masuk', wallet: toWallet, note: `${fullNote} dari ${fromWallet}` });
+
+        setReceiptData({ trxId, date, fromWallet, toWallet, amount, note: note || 'Mutasi Dompet' });
+        
+      } else {
+        const tx = {
+          date: form.elements.date.value,
+          type: txType,
+          amount: form.elements.amount.value,
+          category: form.elements.category.value,
+          wallet: form.elements.wallet.value,
+          note: form.elements.note.value
+        };
+        await addTransaction(tx);
+      }
+      
       form.reset();
       form.elements.date.value = new Date().toISOString().split('T')[0];
       setTxType(null);
@@ -1657,14 +1682,48 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
         <h2 style={{ marginBottom: '1rem' }}>Transaksi Baru</h2>
 
         {!txType ? (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem' }}>
             <button className="btn btn-primary" style={{ background: 'var(--success)', padding: '1rem' }} onClick={() => setTxType('Income')}>
               <Plus size={20} /> Pemasukan
             </button>
             <button className="btn btn-primary" style={{ background: 'var(--danger)', padding: '1rem' }} onClick={() => setTxType('Expense')}>
               <Plus size={20} /> Pengeluaran
             </button>
+            <button className="btn btn-primary" style={{ background: '#0ea5e9', padding: '1rem', borderColor: '#0ea5e9' }} onClick={() => setTxType('Transfer')}>
+              <ArrowRightLeft size={20} /> Mutasi
+            </button>
           </div>
+        ) : txType === 'Transfer' ? (
+          <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Tanggal</label>
+              <GlassDatePicker name="date" required style={{ width: '100%' }} />
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Dari Dompet</label>
+                <GlassSelect name="fromWallet" required options={txWalletOptions} style={{ width: '100%' }} />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Ke Dompet</label>
+                <GlassSelect name="toWallet" required options={txWalletOptions} style={{ width: '100%' }} />
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Jumlah (Rp)</label>
+              <CurrencyInput name="amount" className="form-control" required />
+            </div>
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label>Catatan (Opsional)</label>
+              <input type="text" name="note" className="form-control" placeholder="Contoh: Pindah dana darurat" />
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <button type="submit" className="btn btn-primary" style={{ flex: 1, background: '#0ea5e9', borderColor: 'transparent' }} disabled={isSubmitting}>
+                {isSubmitting ? 'Memproses...' : 'Proses Mutasi'}
+              </button>
+              <button type="button" className="btn btn-outline" onClick={() => setTxType(null)}>Batal</button>
+            </div>
+          </form>
         ) : (
           <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div className="form-group" style={{ marginBottom: 0 }}>
@@ -1811,6 +1870,63 @@ function TransactionsTab({ transactions, categories, wallets, onRefresh, isLoadi
                 <button type="button" className="btn btn-outline" onClick={() => setEditingTx(null)} style={{ flex: 1 }}>Batal</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {receiptData && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }} className="receipt-overlay">
+          <div className="card receipt-card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
+            
+            {/* The Print Area */}
+            <div className="receipt-print-area" style={{ fontFamily: 'monospace', color: '#000', marginBottom: '1.5rem', border: '1px dashed #ccc', padding: '1rem', background: '#fff' }}>
+              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                <h2 style={{ margin: '0 0 0.25rem 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>FamilyFin</h2>
+                <div style={{ fontSize: '0.8rem' }}>Tanda Terima Mutasi</div>
+              </div>
+              
+              <div style={{ borderBottom: '1px dashed #000', margin: '0.5rem 0' }}></div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                <span>ID:</span>
+                <span>{receiptData.trxId}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.25rem' }}>
+                <span>Tanggal:</span>
+                <span>{receiptData.date}</span>
+              </div>
+              
+              <div style={{ borderBottom: '1px dashed #000', margin: '0.5rem 0' }}></div>
+              
+              <div style={{ fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                <strong>Dari:</strong> {receiptData.fromWallet}
+              </div>
+              <div style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                <strong>Ke:</strong> {receiptData.toWallet}
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1rem', fontWeight: 'bold', margin: '1rem 0' }}>
+                <span>TOTAL:</span>
+                <span>Rp {parseInt(receiptData.amount.replace(/\\D/g, '') || '0').toLocaleString('id-ID')}</span>
+              </div>
+              
+              <div style={{ fontSize: '0.8rem', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                Catatan: {receiptData.note}
+              </div>
+              
+              <div style={{ borderBottom: '1px dashed #000', margin: '0.5rem 0' }}></div>
+              <div style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '1rem' }}>
+                Terima kasih
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem' }} className="no-print">
+              <button className="btn btn-primary" onClick={() => window.print()} style={{ flex: 1 }}>
+                Cetak Struk
+              </button>
+              <button className="btn btn-outline" onClick={() => setReceiptData(null)} style={{ flex: 1 }}>
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
