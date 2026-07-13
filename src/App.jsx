@@ -2274,6 +2274,19 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [payingDebt, setPayingDebt] = useState(null); // stores the debt object when paying
 
+  const getWalletBalance = (walletName) => {
+    let balance = 0;
+    if (transactions && transactions.length > 0) {
+      transactions.forEach(t => {
+        if (t.wallet === walletName) {
+          if (t.type === 'Income') balance += Number(t.amount || 0);
+          else if (t.type === 'Expense') balance -= Number(t.amount || 0);
+        }
+      });
+    }
+    return balance;
+  };
+
   const handleAddDebt = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -2426,7 +2439,10 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
                   required
                   options={[
                     { label: 'Pilih Dompet...', value: '' },
-                    ...wallets.map(w => ({ label: w.name, value: w.name }))
+                    ...wallets.map(w => {
+                      const bal = getWalletBalance(w.name);
+                      return { label: `${w.name} (Rp ${bal.toLocaleString('id-ID')})`, value: w.name };
+                    })
                   ]}
                   style={{ width: '100%' }}
                 />
