@@ -25,7 +25,9 @@ import {
   Moon,
   Sun,
   CheckCircle2,
-  Zap
+  Zap,
+  Download,
+  Upload
 } from 'lucide-react';
 import {
   fetchTransactions,
@@ -1234,6 +1236,118 @@ function App() {
     }
   };
 
+  const handleBackupJSON = () => {
+    try {
+      const backupData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        email: currentUser?.email || 'unknown',
+        data: {
+          transactions,
+          categories,
+          wallets,
+          debts
+        }
+      };
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.download = `FamilyFin_Backup_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('JSON Backup failed', err);
+      alert('Gagal melakukan backup JSON.');
+    }
+  };
+
+  const handleRestoreJSON = async (file) => {
+    try {
+      const text = await file.text();
+      const backupData = JSON.parse(text);
+
+      if (!backupData.data) {
+        alert('Format file backup tidak valid. Pastikan file berasal dari FamilyFin.');
+        return;
+      }
+
+      const { transactions: txs, categories: cats, wallets: wals, debts: dbts } = backupData.data;
+      let restored = { transactions: 0, categories: 0, wallets: 0, debts: 0 };
+      let errors = [];
+
+      // Restore categories first
+      if (cats && cats.length > 0) {
+        for (const cat of cats) {
+          try {
+            const existing = categories.find(c => c.name === cat.name && c.type === cat.type);
+            if (!existing) {
+              await addCategory({ name: cat.name, type: cat.type });
+              restored.categories++;
+            }
+          } catch (e) { errors.push(`Kategori ${cat.name}: ${e.message}`); }
+        }
+      }
+
+      // Restore wallets
+      if (wals && wals.length > 0) {
+        for (const wal of wals) {
+          try {
+            const existing = wallets.find(w => w.name === wal.name);
+            if (!existing) {
+              await addWallet({ name: wal.name, icon: wal.icon || '' });
+              restored.wallets++;
+            }
+          } catch (e) { errors.push(`Dompet ${wal.name}: ${e.message}`); }
+        }
+      }
+
+      // Restore transactions
+      if (txs && txs.length > 0) {
+        for (const tx of txs) {
+          try {
+            const existing = transactions.find(t => t.date === tx.date && t.type === tx.type && t.amount === tx.amount && t.note === tx.note);
+            if (!existing) {
+              await addTransaction({ date: tx.date, type: tx.type, amount: tx.amount, category: tx.category, wallet: tx.wallet, note: tx.note || '' });
+              restored.transactions++;
+            }
+          } catch (e) { errors.push(`Transaksi: ${e.message}`); }
+        }
+      }
+
+      // Restore debts
+      if (dbts && dbts.length > 0) {
+        for (const debt of dbts) {
+          try {
+            const existing = debts.find(d => d.name === debt.name && d.amount === debt.amount);
+            if (!existing) {
+              await addDebt({ name: debt.name, amount: debt.amount, type: debt.type, note: debt.note || '', dueDate: debt.dueDate || '' });
+              restored.debts++;
+            }
+          } catch (e) { errors.push(`Hutang ${debt.name}: ${e.message}`); }
+        }
+      }
+
+      await loadData();
+
+      let msg = `✅ Restore selesai!\n\n`;
+      msg += `📦 ${restored.transactions} transaksi dipulihkan\n`;
+      msg += `📂 ${restored.categories} kategori dipulihkan\n`;
+      msg += `💰 ${restored.wallets} dompet dipulihkan\n`;
+      msg += `📝 ${restored.debts} hutang dipulihkan`;
+      if (errors.length > 0) {
+        msg += `\n\n⚠️ ${errors.length} item gagal dipulihkan.`;
+      }
+      alert(msg);
+    } catch (err) {
+      console.error('Restore failed', err);
+      alert('Gagal restore data. Pastikan format file JSON benar.');
+    }
+  };
+
   return (
     <div className="app-layout">
       {/* Top Header */}
@@ -1318,6 +1432,8 @@ function App() {
                 loadData={loadData}
                 isLoading={isLoading}
                 handleBackup={handleBackup}
+                handleBackupJSON={handleBackupJSON}
+                handleRestoreJSON={handleRestoreJSON}
               />
             )}
           </>
@@ -2995,7 +3111,8 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
     </div>
   );
 }
-function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets, loadData, isLoading, handleBackup }) {
+function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets, loadData, isLoading, handleBackup, handleBackupJSON, handleRestoreJSON }) {
+  const [restoring, setRestoring] = useState(false);
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
   const [openAccordion, setOpenAccordion] = useState(null); // 'wallets' or 'categories'
@@ -3088,7 +3205,63 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
           )}
         </div>
       </div>
-      </div>
+
+      {/* Accordion Backup & Restore */}
+      <div style={{ border: '1px solid var(--glass-border)', borderRadius: '12px', overflow: 'hidden' }}>
+          <div
+            style={{ padding: '1rem 1.5rem', background: 'var(--glass-bg)', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontWeight: 'bold' }}
+            onClick={() => setOpenAccordion(openAccordion === 'backup' ? null : 'backup')}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Download size={20} color="var(--primary)" /> Backup & Restore
+            </div>
+            <span>{openAccordion === 'backup' ? '▲' : '▼'}</span>
+          </div>
+          {openAccordion === 'backup' && (
+            <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.3)', borderTop: '1px solid var(--glass-border)' }}>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                Backup semua data (transaksi, kategori, dompet, hutang) ke file lokal. Anda juga bisa memulihkan data dari file backup sebelumnya.
+              </p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {/* Backup Buttons */}
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                  <button className="btn btn-primary" style={{ flex: 1, minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.85rem' }} onClick={handleBackupJSON}>
+                    <Download size={18} /> Backup JSON
+                  </button>
+                  <button className="btn btn-outline" style={{ flex: 1, minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '0.85rem' }} onClick={handleBackup}>
+                    <Download size={18} /> Backup XLSX
+                  </button>
+                </div>
+
+                {/* Restore Section */}
+                <div style={{ padding: '1.25rem', background: 'var(--glass-bg)', border: '1px dashed var(--glass-border)', borderRadius: '12px', textAlign: 'center' }}>
+                  <Upload size={32} color="var(--primary)" style={{ marginBottom: '0.75rem' }} />
+                  <p style={{ fontWeight: '600', marginBottom: '0.5rem' }}>Restore dari File JSON</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                    Pilih file <code>.json</code> backup FamilyFin untuk memulihkan data. Data yang sudah ada tidak akan diduplikat.
+                  </p>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.5rem', background: 'var(--primary)', color: 'white', borderRadius: '8px', cursor: restoring ? 'not-allowed' : 'pointer', fontWeight: '600', opacity: restoring ? 0.7 : 1 }}>
+                    <Upload size={18} />
+                    {restoring ? 'Memproses...' : 'Pilih File Backup'}
+                    <input type="file" accept=".json" style={{ display: 'none' }} disabled={restoring} onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      if (!confirm(`Anda akan memulihkan data dari file "${file.name}".\n\nData yang sudah ada tidak akan diduplikat.\n\nLanjutkan?`)) {
+                        e.target.value = '';
+                        return;
+                      }
+                      setRestoring(true);
+                      await handleRestoreJSON(file);
+                      setRestoring(false);
+                      e.target.value = '';
+                    }} />
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
       {/* Extend Modal */}
       {showExtendModal && !selectedPackage && (
