@@ -3351,6 +3351,29 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
                   )}
                 </div>
 
+                {/* QRIS Static Card */}
+                {appConfig?.Payment_QRIS && (
+                  <div style={{ background: 'rgba(30, 41, 59, 0.8)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '100%' }}>
+                      <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Receipt size={20} color="#818cf8" />
+                      </div>
+                      <div>
+                        <h3 style={{ color: '#f8fafc', margin: '0 0 0.15rem 0', fontSize: '1rem' }}>QRIS</h3>
+                        <p style={{ color: '#64748b', margin: 0, fontSize: '0.75rem' }}>Scan untuk donasi via e-wallet</p>
+                      </div>
+                    </div>
+                    <div style={{ background: '#fff', borderRadius: '12px', padding: '0.75rem', width: '100%', maxWidth: '220px' }}>
+                      <img 
+                        src={appConfig.Payment_QRIS.startsWith('http') ? appConfig.Payment_QRIS : `https://drive.google.com/uc?id=${appConfig.Payment_QRIS}`} 
+                        alt="QRIS" 
+                        style={{ width: '100%', borderRadius: '8px', display: 'block' }} 
+                      />
+                    </div>
+                    <p style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center', margin: 0 }}>Scan QR di atas dengan aplikasi e-wallet favorit Anda</p>
+                  </div>
+                )}
+
                 {/* Saweria / QRIS Card */}
                 <div style={{ background: 'linear-gradient(135deg, #ef4444 0%, #f97316 100%)', borderRadius: '16px', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem', position: 'relative', overflow: 'hidden', minHeight: '200px' }}>
                   {/* Decorative circles */}
