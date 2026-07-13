@@ -2293,8 +2293,19 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
     e.preventDefault();
     setIsSubmitting(true);
     const form = e.target;
+    let baseName = form.elements.name.value;
+    const dueDate = form.elements.dueDate ? form.elements.dueDate.value : null;
+
+    if (dueDate) {
+      const d = new Date(dueDate);
+      if (!isNaN(d.getTime())) {
+        const dateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        baseName = `${baseName} - Jatuh tempo ${dateStr}`;
+      }
+    }
+
     const debt = {
-      name: form.elements.name.value,
+      name: baseName,
       amount: form.elements.amount.value
     };
     try {
@@ -2374,6 +2385,11 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
           <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: '200px' }}>
             <label>Total Hutang (Rp)</label>
             <CurrencyInput name="amount" className="form-control" required />
+          </div>
+          <div className="form-group" style={{ marginBottom: 0, flex: 1, minWidth: '150px' }}>
+            <label>Jatuh Tempo (Opsional)</label>
+            <GlassDatePicker name="dueDate" style={{ width: '100%' }} />
+          </div>
           <button type="submit" className="btn btn-primary" style={{ background: 'var(--danger)', height: '42px', flexShrink: 0 }} disabled={isSubmitting}>
             {isSubmitting ? '...' : 'Tambah Hutang'}
           </button>
