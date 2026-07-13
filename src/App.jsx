@@ -773,7 +773,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
 
       {approveUserEmail && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)', padding: '1rem' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             <h3 style={{ marginTop: 0 }}>Setujui Pengguna</h3>
             <p style={{ color: 'var(--text-muted)' }}>
               Pilih masa aktif berlangganan untuk <strong>{approveUserEmail}</strong>.
@@ -826,7 +826,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
 
       {extendUser && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)', padding: '1rem' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             <h3 style={{ marginTop: 0 }}>Perpanjang Masa Aktif</h3>
             <p style={{ color: 'var(--text-muted)' }}>
               Pilih durasi perpanjangan berlangganan untuk <strong>{extendUser}</strong>.
@@ -861,7 +861,7 @@ function AdminDashboard({ currentUser, onLogout, apiUrl, onSaveApiUrl }) {
 
       {confirmReject && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 100, backdropFilter: 'blur(5px)', padding: '1rem' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             <h3 style={{ marginTop: 0 }}>Konfirmasi Penolakan</h3>
             <p style={{ color: 'var(--text-muted)' }}>
               Apakah Anda yakin ingin menolak dan menghapus pendaftaran <strong>{confirmReject}</strong>?
@@ -3095,7 +3095,7 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
       {/* Popup Modal Form Pembayaran Hutang */}
       {payingDebt && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
             <h3 style={{ margin: '0 0 1rem 0' }}>Form Pembayaran</h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Pelunasan: <strong>{payingDebt.name}</strong></p>
             <form onSubmit={handlePayDebt} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -3155,7 +3155,7 @@ function DebtsTab({ debts, transactions, wallets, onRefresh, isLoading }) {
       {/* Popup Modal Kelola Hutang */}
       {managingDebt && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', padding: '1.5rem', borderRadius: '16px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
             <h3 style={{ margin: '0 0 1rem 0' }}>Kelola Hutang</h3>
             <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Silakan ubah rincian di bawah ini.</p>
             
@@ -3301,7 +3301,7 @@ function PaymentModal({ pkgName, appConfig, currentUser, onClose, precalcAutomat
 
   return (
     <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, padding: '0.5rem', paddingBottom: '90px', backdropFilter: 'blur(5px)' }}>
-      <div className="card" style={{ maxWidth: '420px', width: '100%', background: '#ffffff', border: 'none', borderRadius: '16px', maxHeight: '98vh', overflowY: 'auto', padding: '1rem', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
+      <div className="card" style={{ maxWidth: '420px', width: '100%', border: 'none', borderRadius: '16px', maxHeight: '98vh', overflowY: 'auto', padding: '1rem', boxShadow: '0 20px 40px rgba(0,0,0,0.15)' }}>
         
         {/* Header Invoice */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0', paddingBottom: '0.5rem', marginBottom: '0.75rem' }}>
@@ -3579,7 +3579,7 @@ function SettingsTab({ currentUser, appConfig, handleLogout, categories, wallets
       {/* Extend Modal */}
       {showExtendModal && !selectedPackage && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10000, backdropFilter: 'blur(5px)', padding: '1rem' }}>
-          <div className="card" style={{ maxWidth: '400px', width: '100%', background: '#fff', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%', borderRadius: '16px', padding: '1.5rem', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', border: 'none' }}>
             <h3 style={{ marginTop: 0, color: 'var(--primary)', marginBottom: '1rem' }}>Pilih Paket Perpanjangan</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {appConfig?.Price_1Year && (
